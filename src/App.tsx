@@ -32,8 +32,15 @@ function DefaultApp() {
 }
 
 function App() {
+  watchSeats()
   const auth = useContext(AuthContext);
   return auth ? <AdminApp /> : <DefaultApp />;
+}
+
+async function watchSeats() {
+  await pocketBase.realtime.subscribe('seat', (e) => {
+    console.log(e)
+  })
 }
 
 export default App;

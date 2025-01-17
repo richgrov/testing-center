@@ -2,14 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/subscriptions"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
@@ -19,6 +23,7 @@ func main() {
 		// serves static files from the provided public dir (if exists)
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), false))
 		se.Router.GET("/api/gitea-canvas-adapter", gitea_canvas_adapter)
+		se.Router.GET("/api/next-seat", retreiveNextSeat)
 
 		return se.Next()
 	})
@@ -40,6 +45,52 @@ type GiteaUser struct {
 	Email     string `json:"email"`
 	AvatarURL string `json:"avatar_url"`
 	Id        int64  `json:"id"`
+}
+
+const (
+	SeatSubscription = "seat"
+)
+
+func notifySeatChange(a core.App, change string) error {
+	message := subscriptions.Message{
+		Name: SeatSubscription,
+		Data: []byte(change),
+	}
+	group := new(errgroup.Group)
+
+	chunks := a.SubscriptionsBroker().ChunkedClients(300)
+
+	for _, chunk := range chunks {
+		group.Go(func() error {
+			for _, client := range chunk {
+				if !client.HasSubscription(SeatSubscription) {
+					continue
+				}
+
+				client.Send(message)
+			}
+
+			return nil
+		})
+	}
+
+	return group.Wait()
+}
+
+func retreiveNextSeat(e *core.RequestEvent) error {
+	nextSeat := nextSeatAssignment()
+	e.Response.Header().Add("Content-Type", "application/json")
+	e.Response.Write([]byte(nextSeat))
+	if len(nextSeat) == 0 {
+		return nil
+	}
+
+	err := notifySeatChange(e.App, nextSeat)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func gitea_canvas_adapter(e *core.RequestEvent) error {
@@ -91,4 +142,40 @@ func gitea_canvas_adapter(e *core.RequestEvent) error {
 	}
 
 	return nil
+}
+
+type row struct {
+	seats []bool
+}
+
+type seatState struct {
+	rows []row
+}
+
+var seatStateLock = sync.Mutex{}
+var currentSeatState seatState = seatState{
+	rows: []row{
+		{seats: make([]bool, 10)},
+		{seats: make([]bool, 10)},
+		{seats: make([]bool, 3)},
+		{seats: make([]bool, 3)},
+		{seats: make([]bool, 3)},
+		{seats: make([]bool, 10)},
+		{seats: make([]bool, 10)},
+	},
+}
+
+func nextSeatAssignment() string {
+	seatStateLock.Lock()
+	defer seatStateLock.Unlock()
+	for rowId, row := range currentSeatState.rows {
+		for seatId, seat := range row.seats {
+			if !seat {
+				row.seats[seatId] = true
+				return fmt.Sprintf("{\"seat\":\"-%c%d\"}", rune(int('A')+rowId), seatId+1)
+			}
+		}
+	}
+
+	return ""
 }
