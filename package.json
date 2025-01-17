@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "concurrently \"vite\" \"bunx tailwindcss -i src/index.css -o src/output.css --watch\" \"cd ./backend/; go run . serve\"",
     "build": "tsc -b && bunx tailwindcss -i src/index.css -o src/output.css && vite build && cd ./backend/ && go build",
-    "prod": "bun run build; ./backend/testing-center-backend serve",
+    "prod": "bun run build; ./backend/testing-center serve",
     "lint": "eslint .",
     "preview": "vite preview"
   },
