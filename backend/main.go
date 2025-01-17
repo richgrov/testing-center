@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -91,4 +92,49 @@ func giteaCanvasAdapter(e *core.RequestEvent) error {
 	}
 
 	return nil
+}
+
+type row struct {
+	seats []bool
+}
+
+type seatState struct {
+	rows []row
+}
+
+func nextSeatAssignment(state *seatState) string {
+	for rowId, row := range state.rows {
+		for seatId, seat := range row.seats {
+			if !seat {
+				row.seats[seatId] = true
+				return fmt.Sprintf("%c%d", rune(int('A')+rowId), seatId+1)
+			}
+		}
+	}
+
+	return ""
+}
+
+func _demo() {
+	seatState := seatState{
+		rows: []row{
+			{seats: make([]bool, 10)},
+			{seats: make([]bool, 10)},
+			{seats: make([]bool, 3)},
+			{seats: make([]bool, 3)},
+			{seats: make([]bool, 3)},
+			{seats: make([]bool, 10)},
+			{seats: make([]bool, 10)},
+		},
+	}
+
+	for true {
+		seat := nextSeatAssignment(&seatState)
+		if seat == "" {
+			fmt.Println("No seats left")
+			break
+		} else {
+			fmt.Println(seat)
+		}
+	}
 }
