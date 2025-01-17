@@ -1,4 +1,4 @@
-module testing-center-backend
+module github.com/richgrov/testing-center/v2
 
 go 1.23.4
 
