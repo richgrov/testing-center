@@ -22,8 +22,9 @@ func main() {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		// serves static files from the provided public dir (if exists)
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), false))
-		se.Router.GET("/api/gitea-canvas-adapter", gitea_canvas_adapter)
+		se.Router.GET("/api/gitea-canvas-adapter", giteaCanvasAdapter)
 		se.Router.GET("/api/next-seat", retreiveNextSeat)
+		se.Router.PUT("/api/unassign-seat", unassignSeat)
 
 		return se.Next()
 	})
@@ -93,7 +94,11 @@ func retreiveNextSeat(e *core.RequestEvent) error {
 	return nil
 }
 
-func gitea_canvas_adapter(e *core.RequestEvent) error {
+func unassignSeat(e *core.RequestEvent) error {
+	return nil
+}
+
+func giteaCanvasAdapter(e *core.RequestEvent) error {
 	bearer_header := e.Request.Header.Get("Authorization")
 	req, err := http.NewRequest("GET", "http://localhost/api/v1/users/self", nil)
 	if err != nil {
