@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -44,12 +43,9 @@ type GiteaUser struct {
 }
 
 func gitea_canvas_adapter(e *core.RequestEvent) error {
-	fmt.Println("Canvas adapting")
 	bearer_header := e.Request.Header.Get("Authorization")
-	fmt.Println(bearer_header)
 	req, err := http.NewRequest("GET", "http://localhost/api/v1/users/self", nil)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
@@ -57,7 +53,6 @@ func gitea_canvas_adapter(e *core.RequestEvent) error {
 	req.Header.Add("Accept", "*/*")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	defer resp.Body.Close()
@@ -66,20 +61,14 @@ func gitea_canvas_adapter(e *core.RequestEvent) error {
 
 	body, err = io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	var canvasUser CanvasUser
 
-	fmt.Printf("%s\n", body)
-
 	if err := json.Unmarshal(body, &canvasUser); err != nil {
-		fmt.Println(err)
 		return err
 	}
-
-	fmt.Println(canvasUser)
 
 	giteaUser := GiteaUser{
 		canvasUser.Name,
@@ -89,20 +78,15 @@ func gitea_canvas_adapter(e *core.RequestEvent) error {
 		canvasUser.Id,
 	}
 
-	fmt.Println(giteaUser)
-
 	b, err := json.Marshal(giteaUser)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
-	fmt.Printf("%s\n", b)
 	e.Response.Header().Add("Content-Type", "application/json")
 	written, err := e.Response.Write(b)
 	_ = written
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
