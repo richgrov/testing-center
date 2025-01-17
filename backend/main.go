@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/pocketbase/pocketbase"
@@ -24,7 +26,7 @@ func main() {
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), false))
 		se.Router.GET("/api/gitea-canvas-adapter", giteaCanvasAdapter)
 		se.Router.GET("/api/next-seat", retreiveNextSeat)
-		se.Router.PUT("/api/unassign-seat", unassignSeat)
+		se.Router.PUT("/api/change-seat", changeSeat)
 
 		return se.Next()
 	})
@@ -94,7 +96,58 @@ func retreiveNextSeat(e *core.RequestEvent) error {
 	return nil
 }
 
-func unassignSeat(e *core.RequestEvent) error {
+type seatChange struct {
+	Seat string `json:"seat"`
+}
+
+func changeSeat(e *core.RequestEvent) error {
+	var change seatChange
+	body, err := io.ReadAll(e.Request.Body)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(body, &change)
+	if err != nil {
+		return err
+	}
+
+	seatColumn := int(change.Seat[1]) - int('A')
+	seatRow, err := strconv.Atoi(change.Seat[2:])
+	seatRow -= 1
+	if err != nil {
+		return err
+	}
+
+	if len(currentSeatState.rows) < seatColumn {
+		return errors.New("seatColumn out of bounds")
+	}
+
+	if len(currentSeatState.rows[seatColumn].seats) < seatRow {
+		return errors.New("seatRow out of bounds")
+	}
+
+	seatStateLock.Lock()
+	defer seatStateLock.Unlock()
+	switch change.Seat[0] {
+	case byte('-'):
+		currentSeatState.rows[seatColumn].seats[seatRow] = true
+		break
+	case byte('+'):
+		currentSeatState.rows[seatColumn].seats[seatRow] = false
+		break
+	default:
+		return errors.New("Change expected `+` or `-`")
+	}
+
+	e.Response.Header().Add("Content-Type", "application/json")
+	e.Response.Write(body)
+
+	err = notifySeatChange(e.App, string(body))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
