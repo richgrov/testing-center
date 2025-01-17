@@ -1,4 +1,4 @@
-module test-backend/m/v2
+module testing-center-backend
 
 go 1.23.4
 
