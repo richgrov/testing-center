@@ -18,7 +18,7 @@ func main() {
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		// serves static files from the provided public dir (if exists)
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), false))
-		se.Router.GET("/api/gitea-canvas-adapter", gitea_canvas_adapter)
+		se.Router.GET("/api/gitea-canvas-adapter", giteaCanvasAdapter)
 
 		return se.Next()
 	})
@@ -42,7 +42,7 @@ type GiteaUser struct {
 	Id        int64  `json:"id"`
 }
 
-func gitea_canvas_adapter(e *core.RequestEvent) error {
+func giteaCanvasAdapter(e *core.RequestEvent) error {
 	bearer_header := e.Request.Header.Get("Authorization")
 	req, err := http.NewRequest("GET", "http://localhost/api/v1/users/self", nil)
 	if err != nil {
