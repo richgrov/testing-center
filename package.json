@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"bunx tailwindcss -i src/index.css -o src/output.css --watch\" \"pocketbase serve\"",
+    "dev": "concurrently \"vite\" \"bunx tailwindcss -i src/index.css -o src/output.css --watch\" \"cd ./backend/; go run . serve\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
