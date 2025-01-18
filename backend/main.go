@@ -109,34 +109,78 @@ func rotatePoint(x, y, theta float64) (float64, float64) {
 	return newX, newY
 }
 
-func visbilityFactor(seat *seat, targetX float64, targetY float64) float64 {
-	xDiff := targetX - seat.x
-	yDiff := targetY - seat.y
+func visbilityFactor(origin *seat, target *seat) float64 {
+	xDiff := target.x - origin.x
+	yDiff := target.y - origin.y
 	distance := math.Hypot(xDiff*xDiff, yDiff*yDiff)
 	distanceFactor := math.Exp(-distance)
 
-	rotatedX, rotatedY := rotatePoint(xDiff, yDiff, seat.direction)
+	rotatedX, rotatedY := rotatePoint(xDiff, yDiff, target.direction)
 	relativeAngle := math.Abs(math.Atan2(rotatedY, rotatedX))
 	angleFactor := (math.Pi - relativeAngle) / math.Pi
 	return distanceFactor * angleFactor
 }
 
-func _demo() {
-	seat := seat{
-		name:      "A0",
-		x:         0.5,
-		y:         0.5,
-		direction: math.Pi / 4,
-		occupied:  false,
-	}
-	ascii := " `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@"
+func seatVisibility(seatIdx int, allSeats []seat) float64 {
+	highestVisibility := 0.0
+	seat := allSeats[seatIdx]
 
-	for y := 0.0; y < 1; y += 0.0125 {
-		for x := 0.0; x < 1; x += 0.0125 / 2.0 {
-			visibility := visbilityFactor(&seat, float64(x), float64(y))
-			maxIndex := float64(len(ascii) - 1)
-			fmt.Printf("%c", ascii[int(visibility*maxIndex)])
+	for i, other := range allSeats {
+		if !other.occupied || i == seatIdx {
+			continue
 		}
-		println()
+
+		highestVisibility = math.Max(highestVisibility, visbilityFactor(&other, &seat))
+	}
+
+	return highestVisibility
+}
+
+func leastVisibleSeat(seats []seat) int {
+	best := -1
+	lowestVisibility := math.MaxFloat64
+
+	for i, seat := range seats {
+		if seat.occupied {
+			continue
+		}
+
+		visibility := seatVisibility(i, seats)
+		if visibility < lowestVisibility {
+			best = i
+			lowestVisibility = visibility
+		}
+	}
+
+	return best
+}
+
+func _demo() {
+	seats := []seat{
+		{
+			name:      "A0",
+			x:         0.5,
+			y:         0.5,
+			direction: math.Pi / 4,
+			occupied:  false,
+		},
+		{
+			name:      "A1",
+			x:         1.5,
+			y:         1.5,
+			direction: math.Pi / 4,
+			occupied:  false,
+		},
+	}
+
+	for true {
+		bestSeat := leastVisibleSeat(seats)
+		if bestSeat == -1 {
+			println("no more seats")
+			break
+		}
+
+		fmt.Printf("%#v\n", seats[bestSeat])
+		seats[bestSeat].occupied = true
 	}
 }
