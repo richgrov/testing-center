@@ -12,9 +12,38 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/richgrov/testing-center/v2/seating"
 )
 
 func main() {
+	seats := []seating.Seat{
+		{
+			Name:     "A0",
+			X:        0.5,
+			Y:        0.5,
+			Angle:    math.Pi / 4,
+			Occupied: false,
+		},
+		{
+			Name:     "A1",
+			X:        1.5,
+			Y:        1.5,
+			Angle:    math.Pi / 4,
+			Occupied: false,
+		},
+	}
+
+	for true {
+		bestSeat := seating.LeastVisibleSeat(seats)
+		if bestSeat == -1 {
+			println("no more seats")
+			break
+		}
+
+		fmt.Printf("%#v\n", seats[bestSeat])
+		seats[bestSeat].Occupied = true
+	}
+
 	app := pocketbase.New()
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
@@ -93,94 +122,4 @@ func giteaCanvasAdapter(e *core.RequestEvent) error {
 	}
 
 	return nil
-}
-
-type seat struct {
-	name      string
-	x         float64
-	y         float64
-	direction float64
-	occupied  bool
-}
-
-func rotatePoint(x, y, theta float64) (float64, float64) {
-	newX := x*math.Cos(theta) - y*math.Sin(theta)
-	newY := x*math.Sin(theta) + y*math.Cos(theta)
-	return newX, newY
-}
-
-func visbilityFactor(origin *seat, target *seat) float64 {
-	xDiff := target.x - origin.x
-	yDiff := target.y - origin.y
-	distance := math.Hypot(xDiff*xDiff, yDiff*yDiff)
-	distanceFactor := math.Exp(-distance)
-
-	rotatedX, rotatedY := rotatePoint(xDiff, yDiff, target.direction)
-	relativeAngle := math.Abs(math.Atan2(rotatedY, rotatedX))
-	angleFactor := (math.Pi - relativeAngle) / math.Pi
-	return distanceFactor * angleFactor
-}
-
-func seatVisibility(seatIdx int, allSeats []seat) float64 {
-	highestVisibility := 0.0
-	seat := allSeats[seatIdx]
-
-	for i, other := range allSeats {
-		if !other.occupied || i == seatIdx {
-			continue
-		}
-
-		highestVisibility = math.Max(highestVisibility, visbilityFactor(&other, &seat))
-	}
-
-	return highestVisibility
-}
-
-func leastVisibleSeat(seats []seat) int {
-	best := -1
-	lowestVisibility := math.MaxFloat64
-
-	for i, seat := range seats {
-		if seat.occupied {
-			continue
-		}
-
-		visibility := seatVisibility(i, seats)
-		if visibility < lowestVisibility {
-			best = i
-			lowestVisibility = visibility
-		}
-	}
-
-	return best
-}
-
-func _demo() {
-	seats := []seat{
-		{
-			name:      "A0",
-			x:         0.5,
-			y:         0.5,
-			direction: math.Pi / 4,
-			occupied:  false,
-		},
-		{
-			name:      "A1",
-			x:         1.5,
-			y:         1.5,
-			direction: math.Pi / 4,
-			occupied:  false,
-		},
-	}
-
-	for true {
-		bestSeat := leastVisibleSeat(seats)
-		if bestSeat == -1 {
-			println("no more seats")
-			break
-		}
-
-		fmt.Printf("%#v\n", seats[bestSeat])
-		seats[bestSeat].occupied = true
-	}
 }
