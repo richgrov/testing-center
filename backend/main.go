@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
 
@@ -94,47 +95,48 @@ func giteaCanvasAdapter(e *core.RequestEvent) error {
 	return nil
 }
 
-type row struct {
-	seats []bool
+type seat struct {
+	name      string
+	x         float64
+	y         float64
+	direction float64
+	occupied  bool
 }
 
-type seatState struct {
-	rows []row
+func rotatePoint(x, y, theta float64) (float64, float64) {
+	newX := x*math.Cos(theta) - y*math.Sin(theta)
+	newY := x*math.Sin(theta) + y*math.Cos(theta)
+	return newX, newY
 }
 
-func nextSeatAssignment(state *seatState) string {
-	for rowId, row := range state.rows {
-		for seatId, seat := range row.seats {
-			if !seat {
-				row.seats[seatId] = true
-				return fmt.Sprintf("%c%d", rune(int('A')+rowId), seatId+1)
-			}
-		}
-	}
+func visbilityFactor(seat *seat, targetX float64, targetY float64) float64 {
+	xDiff := targetX - seat.x
+	yDiff := targetY - seat.y
+	distance := math.Hypot(xDiff*xDiff, yDiff*yDiff)
+	distanceFactor := math.Exp(-distance)
 
-	return ""
+	rotatedX, rotatedY := rotatePoint(xDiff, yDiff, seat.direction)
+	relativeAngle := math.Abs(math.Atan2(rotatedY, rotatedX))
+	angleFactor := (math.Pi - relativeAngle) / math.Pi
+	return distanceFactor * angleFactor
 }
 
 func _demo() {
-	seatState := seatState{
-		rows: []row{
-			{seats: make([]bool, 10)},
-			{seats: make([]bool, 10)},
-			{seats: make([]bool, 3)},
-			{seats: make([]bool, 3)},
-			{seats: make([]bool, 3)},
-			{seats: make([]bool, 10)},
-			{seats: make([]bool, 10)},
-		},
+	seat := seat{
+		name:      "A0",
+		x:         0.5,
+		y:         0.5,
+		direction: math.Pi / 4,
+		occupied:  false,
 	}
+	ascii := " `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@"
 
-	for true {
-		seat := nextSeatAssignment(&seatState)
-		if seat == "" {
-			fmt.Println("No seats left")
-			break
-		} else {
-			fmt.Println(seat)
+	for y := 0.0; y < 1; y += 0.0125 {
+		for x := 0.0; x < 1; x += 0.0125 / 2.0 {
+			visibility := visbilityFactor(&seat, float64(x), float64(y))
+			maxIndex := float64(len(ascii) - 1)
+			fmt.Printf("%c", ascii[int(visibility*maxIndex)])
 		}
+		println()
 	}
 }
