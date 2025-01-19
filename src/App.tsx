@@ -7,11 +7,13 @@ import {
   PopoverTrigger,
 } from "./components/ui/popover";
 import { Login } from "./Login";
+import { SeatDisplay } from "./components/SeatDisplay";
 
 function AdminApp() {
   return (
     <>
       <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
+      <SeatDisplay />
     </>
   );
 }
