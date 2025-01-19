@@ -1,6 +1,10 @@
 package seating
 
-import "math"
+import (
+	"image"
+	"image/color"
+	"math"
+)
 
 type Seat struct {
 	Name     string
@@ -41,6 +45,45 @@ func seatVisibility(seatIdx int, allSeats []Seat) float64 {
 	}
 
 	return highestVisibility
+}
+
+func lerpRgba(start, end color.RGBA, t float64) color.RGBA {
+	if t <= 0 {
+		return start
+	}
+	if t >= 1 {
+		return end
+	}
+
+	r := uint8(float64(start.R) + t*(float64(end.R)-float64(start.R)))
+	g := uint8(float64(start.G) + t*(float64(end.G)-float64(start.G)))
+	b := uint8(float64(start.B) + t*(float64(end.B)-float64(start.B)))
+	a := uint8(float64(start.A) + t*(float64(end.A)-float64(start.A)))
+
+	return color.RGBA{R: r, G: g, B: b, A: a}
+}
+
+func BuildHeatmap() *image.RGBA {
+	img := image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{512, 512}})
+	seat := Seat{
+		X: 1.0,
+		Y: 1.0,
+	}
+
+	for x := 0; x < 512; x++ {
+		for y := 0; y < 512; y++ {
+			start := color.RGBA{50, 8, 58, 255}
+			end := color.RGBA{99, 56, 22, 255}
+			target := Seat{
+				X: float64(x) / 256.0,
+				Y: float64(y) / 256.0,
+			}
+			col := lerpRgba(start, end, visbilityFactor(&seat, &target))
+			img.Set(x, y, col)
+		}
+	}
+
+	return img
 }
 
 func LeastVisibleSeat(seats []Seat) int {
