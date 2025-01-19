@@ -2,48 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"os"
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
-	"github.com/richgrov/testing-center/v2/seating"
 )
 
 func main() {
-	seats := []seating.Seat{
-		{
-			Name:     "A0",
-			X:        0.5,
-			Y:        0.5,
-			Angle:    math.Pi / 4,
-			Occupied: false,
-		},
-		{
-			Name:     "A1",
-			X:        1.5,
-			Y:        1.5,
-			Angle:    math.Pi / 4,
-			Occupied: false,
-		},
-	}
-
-	for true {
-		bestSeat := seating.LeastVisibleSeat(seats)
-		if bestSeat == -1 {
-			println("no more seats")
-			break
-		}
-
-		fmt.Printf("%#v\n", seats[bestSeat])
-		seats[bestSeat].Occupied = true
-	}
-
 	app := pocketbase.New()
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
