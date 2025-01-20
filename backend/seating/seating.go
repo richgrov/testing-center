@@ -6,6 +6,8 @@ import (
 	"math"
 )
 
+const DISTANCE_SCALE_DIVISOR = 12.0 * 2
+
 type Seat struct {
 	Name     string
 	X        float64
@@ -23,7 +25,7 @@ func rotatePoint(x, y, theta float64) (float64, float64) {
 func visbilityFactor(origin *Seat, target *Seat) float64 {
 	xDiff := target.X - origin.X
 	yDiff := target.Y - origin.Y
-	distance := math.Hypot(xDiff*xDiff, yDiff*yDiff)
+	distance := math.Hypot(xDiff*xDiff, yDiff*yDiff) / DISTANCE_SCALE_DIVISOR
 	distanceFactor := math.Exp(-distance)
 
 	rotatedX, rotatedY := rotatePoint(xDiff, yDiff, target.Angle)
