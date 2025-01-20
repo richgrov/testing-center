@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/richgrov/testing-center/v2/seating"
 )
 
 func main() {
@@ -19,6 +21,7 @@ func main() {
 		// serves static files from the provided public dir (if exists)
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), false))
 		se.Router.GET("/api/gitea-canvas-adapter", giteaCanvasAdapter)
+		se.Router.GET("/api/seat-assignment/{studentId}", seatAssignment)
 
 		return se.Next()
 	})
@@ -91,4 +94,113 @@ func giteaCanvasAdapter(e *core.RequestEvent) error {
 	}
 
 	return nil
+}
+
+func getAllSeats(app core.App) ([]seating.Seat, error) {
+	seatCollection, err := app.FindCollectionByNameOrId("seats")
+	if err != nil {
+		return nil, err
+	}
+
+	records, err := app.FindAllRecords(seatCollection)
+	if err != nil {
+		return nil, err
+	}
+
+	seats := make([]seating.Seat, 0, len(records))
+	for _, record := range records {
+		seats = append(seats, seating.Seat{
+			Name:     record.GetString("DisplayName"),
+			X:        record.GetFloat("X"),
+			Y:        record.GetFloat("Y"),
+			Angle:    record.GetFloat("Angle"),
+			Occupied: false,
+		})
+	}
+
+	return seats, nil
+}
+
+func getSeatAssignments(app core.App) (map[string]string, error) {
+	seatAssignmentsCollection, err := app.FindCollectionByNameOrId("SeatAssignments")
+	if err != nil {
+		return nil, err
+	}
+
+	seatAssignments, err := app.FindAllRecords(seatAssignmentsCollection)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]string)
+	for _, record := range seatAssignments {
+		studentId := record.GetString("studentId")
+		seatName := record.GetString("seatName")
+		result[studentId] = seatName
+	}
+
+	return result, nil
+}
+
+func assignSeat(app core.App, studentId string, seatName string) error {
+	seatAssignmentsCollection, err := app.FindCollectionByNameOrId("SeatAssignments")
+	if err != nil {
+		return err
+	}
+
+	record := core.NewRecord(seatAssignmentsCollection)
+	record.Set("studentId", studentId)
+	record.Set("seatName", seatName)
+
+	if err = app.Save(record); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func seatAssignment(e *core.RequestEvent) error {
+	studentId := e.Request.PathValue("studentId")
+	if e.Auth == nil {
+		return e.UnauthorizedError("admin privelages required", nil)
+	}
+
+	seats, err := getAllSeats(e.App)
+	if err != nil {
+		return e.InternalServerError("error fetching seats", err)
+	}
+
+	for _, seat := range seats {
+		fmt.Printf("%v\n", seat)
+	}
+
+	seatAssignments, err := getSeatAssignments(e.App)
+	if err != nil {
+		return e.InternalServerError("error fetching seat assignments", err)
+	}
+
+	for otherStudent, otherSeat := range seatAssignments {
+		if otherStudent == studentId {
+			return e.String(http.StatusOK, otherSeat)
+		}
+
+		for i, seat := range seats {
+			if seat.Name == otherSeat {
+				seats[i].Occupied = true
+			}
+		}
+	}
+
+	seatIdx := seating.LeastVisibleSeat(seats)
+	if seatIdx == -1 {
+		return e.NoContent(204)
+	}
+
+	seatName := seats[seatIdx].Name
+
+	if err := assignSeat(e.App, studentId, seatName); err != nil {
+		return err
+	}
+
+	return e.String(http.StatusOK, seatName)
 }
