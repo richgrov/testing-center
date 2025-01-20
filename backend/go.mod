@@ -2,7 +2,7 @@ module github.com/richgrov/testing-center/v2
 
 go 1.23.4
 
-require github.com/pocketbase/pocketbase v0.24.3
+require github.com/pocketbase/pocketbase v0.24.4
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7 // indirect
