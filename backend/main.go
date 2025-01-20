@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -168,10 +167,6 @@ func seatAssignment(e *core.RequestEvent) error {
 	seats, err := getAllSeats(e.App)
 	if err != nil {
 		return e.InternalServerError("error fetching seats", err)
-	}
-
-	for _, seat := range seats {
-		fmt.Printf("%v\n", seat)
 	}
 
 	seatAssignments, err := getSeatAssignments(e.App)
