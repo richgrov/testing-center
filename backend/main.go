@@ -21,6 +21,7 @@ func main() {
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), false))
 		se.Router.GET("/api/gitea-canvas-adapter", giteaCanvasAdapter)
 		se.Router.GET("/api/seat-assignment/{studentId}", seatAssignment)
+		se.Router.POST("/api/superUserFetchForward", FetchHandler)
 
 		return se.Next()
 	})
