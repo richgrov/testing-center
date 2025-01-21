@@ -89,7 +89,7 @@ func addSeats(seats []seating.Seat, app *pocketbase.PocketBase) error {
 		record.Set("DisplayName", seat.Name)
 		record.Set("X", seat.X)
 		record.Set("Y", seat.Y)
-		record.Set("Angle", seat.X)
+		record.Set("Angle", seat.Angle)
 		if err := app.Save(record); err != nil {
 			return err
 		}
