@@ -12,7 +12,7 @@ export function Login() {
     e.preventDefault();
     try {
       await pocketBase
-        .collection("users")
+        .collection("_superusers")
         .authWithPassword(emailRef.current!.value, passwordRef.current!.value);
     } catch (err) {
       console.error(err);
