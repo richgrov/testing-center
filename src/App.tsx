@@ -1,41 +1,16 @@
-import { useContext } from "react";
-import { AuthContext, pocketBase } from "./pocketbase";
-import { Button } from "./components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "./components/ui/popover";
-import { Login } from "./Login";
-import { SeatDisplay } from "./components/SeatDisplay";
+import { BrowserRouter, Route, Routes } from "react-router";
 
-function AdminApp() {
-  return (
-    <>
-      <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
-      <SeatDisplay />
-    </>
-  );
+import AdminApp from "@/pages/Admin";
+import IndexPage from "@/pages/Index";
+import Layout from "./pages/Layout";
+
+export default function App() {
+  return <BrowserRouter>
+    <Routes>
+      <Route element={<Layout />} >
+        <Route path = "/" element={<IndexPage />} />
+        <Route path = "/admin" element={<AdminApp />} />
+      </Route>
+    </Routes>
+  </BrowserRouter>;
 }
-
-function DefaultApp() {
-  return (
-    <>
-      <Popover>
-        <PopoverTrigger>
-          <Button>Admin Login</Button>
-        </PopoverTrigger>
-        <PopoverContent>
-          <Login />
-        </PopoverContent>
-      </Popover>
-    </>
-  );
-}
-
-function App() {
-  const auth = useContext(AuthContext);
-  return auth ? <AdminApp /> : <DefaultApp />;
-}
-
-export default App;
