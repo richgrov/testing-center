@@ -4,10 +4,12 @@ import TestEnrollmentFabricator from "./TestEnrollmentFabricator";
 import { useEffect } from "react";
 import { pocketBase } from "@/pocketbase";
 import { fetchForward } from "./utils";
+import LinkSender from "./LinkSender";
 
 export default function ChristianScratchpadRoutes() {
   return <Route path="/christian_scratchpad" element={<Layout />}>
     <Route path="/christian_scratchpad/test_enrollment_fabricator" element={<TestEnrollmentFabricator />} />
+    <Route path="/christian_scratchpad/link_sender" element={<LinkSender />} />
   </Route>
 }
 

@@ -15,6 +15,7 @@ export interface TestEnrollment extends RecordModel {
   start_test_at: string;
   test: string;
   canvas_student_name: string;
+  canvas_student_id: number;
   unlocks_at: string;
 }
 export interface Test extends RecordModel {
