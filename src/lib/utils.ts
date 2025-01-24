@@ -5,7 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function parsePocketbaseDate(dateString: string): Date {
+export function parsePocketbaseDate(dateString: string): Date | null {
+  if (dateString == null || dateString === "") return null;
   return new Date(dateString.replace(" ", "T"));
 }
 
