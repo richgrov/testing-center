@@ -18,7 +18,7 @@ func main() {
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		// serves static files from the provided public dir (if exists)
-		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), false))
+		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), true))
 		se.Router.GET("/api/gitea-canvas-adapter", giteaCanvasAdapter)
 		se.Router.GET("/api/seat-assignment/{studentId}", seatAssignment)
 		se.Router.POST("/api/superUserFetchForward", FetchHandler)

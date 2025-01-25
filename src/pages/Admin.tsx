@@ -1,41 +1,44 @@
 import { AuthContext, pocketBase } from "../pocketbase";
-import { SeatDisplay } from "@/components/SeatDisplay";
 import React, { useContext } from "react";
-import { Login } from "@/Login";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
+import { Login } from "../Login";
+import TestEnrollmentFabricator from "./components/TestEnrollmentFabricator";
+
 
 export function AdminGuard(props: React.PropsWithChildren<{}>) {
   const auth = useContext(AuthContext);
   if (auth) {
     return props.children;
   } else {
-    return <div>
-      <span>Not an admin</span>
-      <Popover>
-        <PopoverTrigger>
-          <Button>Admin Login</Button>
-        </PopoverTrigger>
-        <PopoverContent>
+    return (
+      <>
+        <header className="container">
+          <hgroup>
+            <h1>You need to be an admin to access this page</h1>
+            <p>Please log in below</p>
+          </hgroup>
+        </header>
+        <main className="container">
           <Login />
-        </PopoverContent>
-      </Popover>
-    </div>;
+        </main>
+      </>
+    );
   }
 }
 
-export function AdminApp() {
-  return (
-    <AdminGuard>
-      <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
-      <SeatDisplay />
-    </AdminGuard>
-  );
+export default function() {
+    return (
+      <AdminGuard>
+        <header className="container">
+          <hgroup>
+            <h1>You're logged in!</h1>
+            <p>Welcome!</p>
+            <nav>
+              <button className="secondary" onClick={() => pocketBase.authStore.clear()}>Logout</button>
+            </nav>
+          </hgroup>
+        </header>
+        <TestEnrollmentFabricator />
+      </AdminGuard>
+    );
 }
-
-export default AdminApp;
 

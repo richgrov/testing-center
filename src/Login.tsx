@@ -1,6 +1,4 @@
 import { useRef } from "react";
-import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
 
 import { pocketBase } from "./pocketbase";
 
@@ -31,17 +29,28 @@ export function Login() {
 
   return (
     <>
-      <form className="flex flex-col gap-3" onSubmit={onSubmit}>
-        <Input name="email" placeholder="Email" type="email" ref={emailRef} />
-        <Input
-          name="password"
-          placeholder="Password"
-          type="password"
-          ref={passwordRef}
-        />
-        <Button>Login</Button>
+      <form onSubmit={onSubmit}>
+        <fieldset className="grid">
+          <input 
+            name="login"
+            placeholder="Login"
+            aria-label="Login"
+            autoComplete="username"
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            aria-label="Password"
+            autoComplete="current-password"
+          />
+          <input
+            type="submit"
+            value="Log in"
+          />
+        </fieldset>
       </form>
-      <Button onClick={loginCanvas}>Login with Canvas</Button>
+      <button onClick={loginCanvas}>Login with Canvas</button>
     </>
   );
 }

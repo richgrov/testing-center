@@ -25,5 +25,6 @@ dist-ssr
 
 /backend/pb_data/
 /backend/testing-center
+.parcel-cache/
 vision.png
 src/output.css

@@ -1,7 +1,6 @@
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import "./output.css";
-import App from "./App.tsx";
+import { App } from "./App.tsx";
 import { Auth, AuthContext, pocketBase } from "./pocketbase.ts";
 
 function Root() {
@@ -28,4 +27,4 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Root />
   </StrictMode>
-);
+)

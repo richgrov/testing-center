@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { paginatedCanvasRequest } from "./utils";
-import { Button } from "@/components/ui/button"; 
-import { pocketBase } from "@/pocketbase";
+import { pocketBase } from "../../pocketbase";
 
 
 export default function TestEnrollmentFabricator() {
@@ -68,14 +67,39 @@ export default function TestEnrollmentFabricator() {
     }
   }
 
-  return <div className="leading-normal">
-    <label>Canvas API base: <input className="border border-black" value={apiBase} onChange={e => setApiBase(e.target.value)} /></label><br />
-    <label>Canvas Authorization Header: <input className="border border-black" value={authHeader} onChange={e => setAuthHeader(e.target.value)}/></label><br />
-    <label>Canvas Course ID: <input className="border border-black" value={courseId} onChange={e => setCourseId(e.target.value)} /></label><br />
-    <label>Pocketbase Test ID: <input className="border border-black" value={testId} onChange={e => setTestId(e.target.value)} /></label><br />
-    <label>Enrollments Unlock After UTC: <input className="border border-black" value={unlocksAfter} onChange={e => setUnlocksAfter(e.target.value)} /></label><br/>
-    <Button onClick={createJsonPayload}>Create JSON paylaod</Button>
-    <Button onClick={submitAsEntries}>Submit as entries</Button><br/>
-    <textarea className="border border-black" value={jsonPayload} onChange={e => setJsonPayload(e.target.value)} />
-  </div>;
+  return <>
+    <header className="container">
+      <hgroup>
+        <h1>Test enrollment fabricator</h1>
+        <p>Create test enrollment collections from Canvas</p>
+      </hgroup>
+    </header>
+    <main className="container">
+      <form>
+        <label>
+          Canvas API base
+          <input value={apiBase} onChange={e => setApiBase(e.target.value)} />
+        </label>
+        <label>
+          Canvas Authorization Header
+          <input value={authHeader} onChange={e => setAuthHeader(e.target.value)}/>
+        </label>
+        <label>
+          Canvas Course ID:
+          <input value={courseId} onChange={e => setCourseId(e.target.value)} />
+        </label>
+        <label>
+          Pocketbase Test ID:
+          <input value={testId} onChange={e => setTestId(e.target.value)} />
+        </label>
+        <label>
+          Enrollments Unlock After UTC:
+          <input value={unlocksAfter} onChange={e => setUnlocksAfter(e.target.value)} />
+        </label>
+        <input type="submit" onClick={createJsonPayload} value="Create JSON paylaod" />
+        <input type="submit" onClick={submitAsEntries} value="Submit as entries" />
+        <textarea value={jsonPayload} onChange={e => setJsonPayload(e.target.value)} />
+      </form>
+    </main>
+  </>;
 }

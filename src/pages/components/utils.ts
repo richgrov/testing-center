@@ -1,4 +1,4 @@
-import { pocketBase } from "@/pocketbase";
+import { pocketBase } from "../../pocketbase";
 export interface FetchForwardRequest {
   url: URL | string;
   method: string;

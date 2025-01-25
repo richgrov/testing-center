@@ -1,0 +1,9 @@
+{
+	"plugins": {
+		"@fullhuman/postcss-purgecss": {
+			"content": ["./src/**/*.html", "./src/**/*.tsx", "./src/**/*.ts"],
+			"keyframes": true,
+			"variables": true
+		}
+	}
+}
