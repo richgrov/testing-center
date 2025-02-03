@@ -31,7 +31,13 @@ export default function AdminLayout() {
 
   return (
     <>
-      <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
+      <div
+        className="flex w-100 p-4 items-center"
+        style={{ borderBottom: "1px solid #e4e4e7" }}
+      >
+        <h1 className="text-xl font-bold flex-1">Testing Center Control</h1>
+        <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
+      </div>
       <Outlet />
     </>
   );
