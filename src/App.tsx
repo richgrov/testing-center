@@ -10,6 +10,7 @@ import LinkSender from "./pages/christian_scratchpad/LinkSender";
 import CrudeSchedulingExporter from "./pages/christian_scratchpad/CrudeSchedulingExporter";
 import EmailExtractor from "./pages/christian_scratchpad/EmailExtractor";
 import { ChristianScratchpadLayout } from "./pages/christian_scratchpad/ChristianScratchpadPage";
+import { SeatsAdminApp } from "./pages/admin/Seats";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/" element={<IndexPage />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminApp />} />
+            <Route path="seats" element={<SeatsAdminApp />} />
             <Route
               path="christian_scratchpad"
               element={<ChristianScratchpadLayout />}

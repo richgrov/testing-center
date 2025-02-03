@@ -8,7 +8,22 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Login } from "@/Login";
-import { Outlet } from "react-router";
+import { NavLink, Outlet } from "react-router";
+
+function ActiveNavLink({
+  to,
+  children,
+}: React.PropsWithChildren<{ to: string }>) {
+  return (
+    <NavLink
+      to={to}
+      end
+      className={({ isActive }) => (isActive ? "font-bold" : "")}
+    >
+      {children}
+    </NavLink>
+  );
+}
 
 export default function AdminLayout() {
   const auth = useContext(AuthContext);
@@ -31,13 +46,17 @@ export default function AdminLayout() {
 
   return (
     <>
-      <div
-        className="flex w-100 p-4 items-center"
+      <nav
+        className="flex w-100 p-4 items-center gap-8"
         style={{ borderBottom: "1px solid #e4e4e7" }}
       >
-        <h1 className="text-xl font-bold flex-1">Testing Center Control</h1>
+        <h1 className="text-xl font-bold">Testing Center Control</h1>
+        <ActiveNavLink to="/admin/">Home</ActiveNavLink>
+        <div className="flex-1">
+          <ActiveNavLink to="/admin/seats">Seat Management</ActiveNavLink>
+        </div>
         <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
-      </div>
+      </nav>
       <Outlet />
     </>
   );
