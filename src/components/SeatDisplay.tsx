@@ -18,15 +18,15 @@ function Seat(props: SeatRecord) {
   return (
     <div className="absolute" style={{ top: props.Y * 2, left: props.X * 2 }}>
       <img
-        className="absolute top-0 w-64 max-w-screen-2xl"
+        className="absolute top-0 w-72 max-w-screen-2xl"
         style={{
-          transform: `translate(-50%, -50%) rotate(${toDegrees(
+          transform: `translate(-50%, -50%) rotate(${-toDegrees(
             props.Angle
           )}deg)`,
         }}
         src={vision}
       />
-      <p className="absolute top-0 -translate-x-1/2 -translate-y-1/2 bg-white bg-opacity-50 p-3 rounded select-none">
+      <p className="absolute top-0 -translate-x-1/2 -translate-y-1/2 bg-white z-[9999] py-1 px-2 rounded select-none">
         {props.DisplayName}
       </p>
     </div>

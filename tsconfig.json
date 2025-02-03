@@ -6,6 +6,7 @@
   ],
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": "es2021",
     "paths": {
       "@/*": ["./src/*"]
     }
