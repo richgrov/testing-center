@@ -28,3 +28,6 @@ dist-ssr
 .parcel-cache/
 vision.png
 src/output.css
+
+# Production stuff
+.env.production
