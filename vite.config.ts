@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { purgeCSSPlugin } from '@fullhuman/postcss-purgecss'
+import { compression } from 'vite-plugin-compression2'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,5 +16,5 @@ export default defineConfig({
       ]
     }
   },
-  plugins: [react()],
+  plugins: [react(), compression(), compression({ algorithm: 'brotliCompress' })],
 })

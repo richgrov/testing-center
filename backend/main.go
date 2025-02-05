@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -32,6 +33,7 @@ func main() {
 		se.Router.GET("/{path...}", apis.Static(os.DirFS("./dist"), true))
 		se.Router.GET("/api/gitea-canvas-adapter", giteaCanvasAdapter)
 		se.Router.GET("/api/seat-assignment/{studentId}", seatAssignment)
+		se.Router.GET("/lti/register", ltiRegister)
 		se.Router.POST("/api/superUserFetchForward", FetchHandler)
 
 		return se.Next()
@@ -54,6 +56,11 @@ type GiteaUser struct {
 	Email     string `json:"email"`
 	AvatarURL string `json:"avatar_url"`
 	Id        int64  `json:"id"`
+}
+
+func ltiRegister(e *core.RequestEvent) error {
+	fmt.Print(e.Request.URL.RawQuery)
+	return nil
 }
 
 func giteaCanvasAdapter(e *core.RequestEvent) error {
@@ -172,9 +179,9 @@ func assignSeat(app core.App, studentId string, seatName string) error {
 
 func seatAssignment(e *core.RequestEvent) error {
 	studentId := e.Request.PathValue("studentId")
-	if e.Auth == nil {
-		return e.UnauthorizedError("admin privelages required", nil)
-	}
+	// if e.Auth == nil {
+	// 	return e.UnauthorizedError("admin privelages required", nil)
+	// }
 
 	seats, err := getAllSeats(e.App)
 	if err != nil {
