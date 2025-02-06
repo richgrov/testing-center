@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableCell,
@@ -27,39 +28,53 @@ interface Enrollment {
 
 export function SignUpPage() {
   const [enrollments, setEnrollments] = useState(new Array<Enrollment>());
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     enrollmentsCollection
-      .getList(undefined, 500, { expand: "test" })
+      .getList(page, 100, { expand: "test", sort: "-start_test_at" })
       .then((data) => {
         setEnrollments(data.items as any[] as Enrollment[]);
       });
-  }, []);
+  }, [page]);
 
   enrollmentsCollection.subscribe("*", (data) => {
     console.log(data);
   });
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Time</TableHead>
-          <TableHead>Course</TableHead>
-        </TableRow>
-      </TableHeader>
-      {enrollments.map((e) => (
-        <TableRow>
-          <TableCell>{e.canvas_student_name}</TableCell>
-          <TableCell>
-            {parsePocketbaseDate(e.start_test_at).toLocaleString()}
-          </TableCell>
-          <TableCell>
-            {e.expand.test.course_code + " " + e.expand.test.section}
-          </TableCell>
-        </TableRow>
-      ))}
-    </Table>
+    <>
+      <div className="flex items-center justify-center gap-4 my-2">
+        <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
+          Previous
+        </Button>
+        <p>Page {page}</p>
+        <Button onClick={() => setPage(page + 1)}>Next</Button>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Time</TableHead>
+            <TableHead>Duration</TableHead>
+            <TableHead>Course</TableHead>
+            <TableHead>Rules</TableHead>
+          </TableRow>
+        </TableHeader>
+        {enrollments.map((e, i) => (
+          <TableRow key={i}>
+            <TableCell>{e.canvas_student_name}</TableCell>
+            <TableCell>
+              {parsePocketbaseDate(e.start_test_at).toLocaleString()}
+            </TableCell>
+            <TableCell>{e.duration_mins + " minutes"}</TableCell>
+            <TableCell>
+              {e.expand.test.course_code + " " + e.expand.test.section}
+            </TableCell>
+            <TableCell>Rules</TableCell>
+          </TableRow>
+        ))}
+      </Table>
+    </>
   );
 }
