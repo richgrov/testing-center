@@ -30,6 +30,7 @@ export default function Layout() {
       >
         <h1 className="text-xl font-bold">The Testing Center</h1>
         <ActiveNavLink to="/">Sign Up For a Test</ActiveNavLink>
+        <ActiveNavLink to="/tests">Tests</ActiveNavLink>
         <div className="flex-1">
           <ActiveNavLink to="/seats">Seat Management</ActiveNavLink>
         </div>

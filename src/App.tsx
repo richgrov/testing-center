@@ -9,6 +9,7 @@ import EmailExtractor from "./pages/christian_scratchpad/EmailExtractor";
 import { ChristianScratchpadLayout } from "./pages/christian_scratchpad/ChristianScratchpadPage";
 import { SeatsAdminApp } from "./pages/Seats";
 import { SignUpPage } from "./pages/SignUp";
+import { TestsPage } from "./pages/Tests";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<SignUpPage />} />
+          <Route path="tests" element={<TestsPage />} />
           <Route path="seats" element={<SeatsAdminApp />} />
           <Route
             path="christian_scratchpad"
