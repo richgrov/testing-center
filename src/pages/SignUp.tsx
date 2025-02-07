@@ -6,8 +6,8 @@ import {
   TableRow,
   TableHead,
 } from "@/components/ui/table";
-import { parsePocketbaseDate, pocketBase } from "@/pocketbase";
-import { useEffect, useState } from "react";
+import { AuthContext, parsePocketbaseDate, pocketBase } from "@/pocketbase";
+import { useContext, useEffect, useState } from "react";
 
 const enrollmentsCollection = pocketBase.collection("test_enrollments");
 
@@ -27,6 +27,8 @@ interface Enrollment {
 }
 
 export function SignUpPage() {
+  const auth = useContext(AuthContext);
+
   const [enrollments, setEnrollments] = useState(new Array<Enrollment>());
   const [page, setPage] = useState(0);
 
@@ -41,6 +43,10 @@ export function SignUpPage() {
   enrollmentsCollection.subscribe("*", (data) => {
     console.log(data);
   });
+
+  if (!auth) {
+    return <></>;
+  }
 
   return (
     <>
