@@ -26,6 +26,23 @@ interface Enrollment {
   unlock_after: string;
 }
 
+interface PageNavigationProps {
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
+}
+
+function PageNavigation({ page, setPage }: PageNavigationProps) {
+  return (
+    <div className="flex items-center justify-center gap-4 my-2">
+      <Button onClick={() => setPage((page) => page - 1)} disabled={page === 0}>
+        Previous
+      </Button>
+      <p>Page {page + 1}</p>
+      <Button onClick={() => setPage((page) => page + 1)}>Next</Button>
+    </div>
+  );
+}
+
 export function SignUpPage() {
   const auth = useContext(AuthContext);
 
@@ -50,13 +67,7 @@ export function SignUpPage() {
 
   return (
     <>
-      <div className="flex items-center justify-center gap-4 my-2">
-        <Button onClick={() => setPage(page - 1)} disabled={page === 0}>
-          Previous
-        </Button>
-        <p>Page {page + 1}</p>
-        <Button onClick={() => setPage(page + 1)}>Next</Button>
-      </div>
+      <PageNavigation page={page} setPage={setPage} />
       <Table>
         <TableHeader>
           <TableRow>
@@ -81,6 +92,7 @@ export function SignUpPage() {
           </TableRow>
         ))}
       </Table>
+      <PageNavigation page={page} setPage={setPage} />
     </>
   );
 }
