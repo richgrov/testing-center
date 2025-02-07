@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 
@@ -7,14 +7,19 @@ import { pocketBase } from "./pocketbase";
 export function Login() {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const [feedback, setFeedback] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     try {
       await pocketBase
-        .collection("_superusers")
+        .collection("users")
         .authWithPassword(emailRef.current!.value, passwordRef.current!.value);
     } catch (err) {
+      if (typeof err === "object" && (err as any).status === 400) {
+        setFeedback("Invalid login");
+        return;
+      }
       console.error(err);
     }
   }
@@ -29,6 +34,7 @@ export function Login() {
           type="password"
           ref={passwordRef}
         />
+        <p className="text-sm text-red-500 text-center">{feedback}</p>
         <Button>Login</Button>
       </form>
     </>
