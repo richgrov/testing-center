@@ -28,7 +28,7 @@ interface Enrollment {
 
 export function SignUpPage() {
   const [enrollments, setEnrollments] = useState(new Array<Enrollment>());
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     enrollmentsCollection
@@ -45,10 +45,10 @@ export function SignUpPage() {
   return (
     <>
       <div className="flex items-center justify-center gap-4 my-2">
-        <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
+        <Button onClick={() => setPage(page - 1)} disabled={page === 0}>
           Previous
         </Button>
-        <p>Page {page}</p>
+        <p>Page {page + 1}</p>
         <Button onClick={() => setPage(page + 1)}>Next</Button>
       </div>
       <Table>
