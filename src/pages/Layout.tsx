@@ -45,7 +45,7 @@ export default function Layout() {
         ) : (
           <Popover>
             <PopoverTrigger>
-              <Button onClick={() => {}}>Login</Button>
+              <Button>Admin Login</Button>
             </PopoverTrigger>
             <PopoverContent>
               <Login />
