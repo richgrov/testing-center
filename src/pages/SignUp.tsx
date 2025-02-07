@@ -62,7 +62,11 @@ export function SignUpPage() {
   });
 
   if (!auth) {
-    return <></>;
+    return (
+      <p className="text-center font-bold text-lg mt-10">
+        Perhaps you meant to go to a link?
+      </p>
+    );
   }
 
   return (
