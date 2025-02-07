@@ -19,16 +19,6 @@ export function Login() {
     }
   }
 
-  async function loginCanvas() {
-    try {
-      await pocketBase
-        .collection("users")
-        .authWithOAuth2({provider: 'gitea'});
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
   return (
     <>
       <form className="flex flex-col gap-3" onSubmit={onSubmit}>
@@ -41,7 +31,6 @@ export function Login() {
         />
         <Button>Login</Button>
       </form>
-      <Button onClick={loginCanvas}>Login with Canvas</Button>
     </>
   );
 }
