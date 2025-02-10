@@ -30,29 +30,28 @@ export default function Layout() {
 
   return (
     <div className="w-screen min-h-screen p-0 m-0 overflow-x-hidden overflow-y-auto justify-items-center">
-      <nav
-        className="flex w-100 p-4 items-center gap-8"
-        style={{ borderBottom: "1px solid #e4e4e7" }}
-      >
-        <h1 className="text-xl font-bold">The Testing Center</h1>
-        <ActiveNavLink to="/">Sign Up For a Test</ActiveNavLink>
-        {auth && <ActiveNavLink to="/tests">Tests</ActiveNavLink>}
-        <div className="flex-1">
-          {auth && <ActiveNavLink to="/seats">Seat Management</ActiveNavLink>}
-        </div>
-        {auth ? (
-          <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
-        ) : (
-          <Popover>
-            <PopoverTrigger>
-              <Button>Admin Login</Button>
-            </PopoverTrigger>
-            <PopoverContent>
-              <Login />
-            </PopoverContent>
-          </Popover>
-        )}
-      </nav>
+      <div style={{ borderBottom: "1px solid #e4e4e7" }}>
+        <nav className="flex p-4 items-center gap-8 w-full max-w-screen-lg mx-auto">
+          <h1 className="text-xl font-bold">The Testing Center</h1>
+          <ActiveNavLink to="/">Sign Up For a Test</ActiveNavLink>
+          {auth && <ActiveNavLink to="/tests">Tests</ActiveNavLink>}
+          <div className="flex-1">
+            {auth && <ActiveNavLink to="/seats">Seat Management</ActiveNavLink>}
+          </div>
+          {auth ? (
+            <Button onClick={() => pocketBase.authStore.clear()}>Logout</Button>
+          ) : (
+            <Popover>
+              <PopoverTrigger>
+                <Button>Admin Login</Button>
+              </PopoverTrigger>
+              <PopoverContent>
+                <Login />
+              </PopoverContent>
+            </Popover>
+          )}
+        </nav>
+      </div>
       <Outlet />
     </div>
   );

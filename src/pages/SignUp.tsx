@@ -72,7 +72,7 @@ export function SignUpPage() {
   return (
     <>
       <PageNavigation page={page} setPage={setPage} />
-      <Table>
+      <Table className="max-w-screen-lg mx-auto">
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
