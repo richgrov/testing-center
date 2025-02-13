@@ -29,7 +29,7 @@ export default function Layout() {
   const auth = useContext(AuthContext);
 
   return (
-    <div className="w-screen min-h-screen p-0 m-0 overflow-x-hidden overflow-y-auto justify-items-center">
+    <div className="w-screen min-h-screen p-0 m-0 overflow-x-hidden overflow-y-auto">
       <div style={{ borderBottom: "1px solid #e4e4e7" }}>
         <nav className="flex p-4 items-center gap-8 w-full max-w-screen-lg mx-auto">
           <h1 className="text-xl font-bold">The Testing Center</h1>
@@ -52,7 +52,9 @@ export default function Layout() {
           )}
         </nav>
       </div>
-      <Outlet />
+      <div className="justify-self-center">
+        <Outlet />
+        </div>
     </div>
   );
 }
