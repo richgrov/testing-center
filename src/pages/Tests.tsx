@@ -8,6 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const testsCollection = pocketBase.collection("tests");
 
@@ -19,6 +28,22 @@ interface Test {
   duration_mins: number;
   course_code: string;
   section: string | undefined;
+}
+
+function EditTestDialog() {
+  return (
+    <Dialog>
+      <DialogTrigger>
+        <Button className="mb-5">New Test</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Test</DialogTitle>
+          <DialogDescription>New Test</DialogDescription>
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function Test(props: Test) {
@@ -49,10 +74,13 @@ export function TestsPage() {
   }, []);
 
   return (
-    <div className="flex flex-wrap m-5 gap-4">
-      {tests.map((test) => (
-        <Test key={test.id} {...test} />
-      ))}
+    <div className="m-5">
+      <EditTestDialog />
+      <div className="flex flex-wrap gap-4">
+        {tests.map((test) => (
+          <Test key={test.id} {...test} />
+        ))}
+      </div>
     </div>
   );
 }
