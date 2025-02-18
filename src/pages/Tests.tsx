@@ -32,7 +32,7 @@ function generateId() {
 function formatDateForInput(dateStr: string) {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-  return date.toISOString().slice(0, 16); // Ensure correct format
+  return date.toISOString().slice(0, 10); // Format as YYYY-MM-DD (date only)
 }
 
 function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
@@ -45,7 +45,7 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
     const { name, value } = e.target;
 
     if (name === "opens" || name === "closes") {
-      const datePart = value.split("T")[0]; // Extract only the date part
+      const datePart = value; // Use the date part directly, no need to split
       let fixedTime = name === "opens" ? "00:00" : "23:59"; // Set time accordingly
       const localDateTime = new Date(`${datePart}T${fixedTime}`);
       setFormData({ ...formData, [name]: localDateTime.toISOString().slice(0, 16) });
@@ -70,12 +70,19 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
           <DialogTitle>{test ? "Edit Test" : "New Test"}</DialogTitle>
           <DialogDescription>Enter test details</DialogDescription>
         </DialogHeader>
+        <label>Name of Test</label>
         <Input name="name" value={formData.name} onChange={handleChange} placeholder="Test Name" />
+        <label>Course Code</label>
         <Input name="course_code" value={formData.course_code} onChange={handleChange} placeholder="Course Code" />
+        <label>Section</label>
         <Input name="section" value={formData.section || ""} onChange={handleChange} placeholder="Section (optional)" />
-        <Input name="opens" type="datetime-local" value={formatDateForInput(formData.opens)} onChange={handleChange} />
-        <Input name="closes" type="datetime-local" value={formatDateForInput(formData.closes)} onChange={handleChange} />
+        <label>Test's opening date</label>
+        <Input name="opens" type="date" value={formatDateForInput(formData.opens)} onChange={handleChange} />
+        <label>Test's closing date</label>
+        <Input name="closes" type="date" value={formatDateForInput(formData.closes)} onChange={handleChange} />
+        <label>Test Duration</label>
         <Input name="duration_mins" type="number" value={formData.duration_mins} onChange={handleChange} placeholder="Duration (mins)" />
+        <label>Rules</label>
         <Input name="rules" value={formData.rules || ""} onChange={handleChange} placeholder="Rules"/>
         <Button onClick={handleSubmit}>Save</Button>
       </DialogContent>

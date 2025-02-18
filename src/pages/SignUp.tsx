@@ -143,9 +143,10 @@ export function SignUpPage() {
       <Table className="max-w-screen-lg mx-auto">
         <TableHeader>
           <TableRow>
-            {selectedEnrollments.size > 0 && (
-              <TableHead>{selectedEnrollments.size} / 100</TableHead>
-            )}
+            {/* Always render the first header, even when no checkboxes are selected */}
+            <TableHead>
+              {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : ""}
+            </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Duration</TableHead>
@@ -174,6 +175,7 @@ export function SignUpPage() {
           </TableRow>
         ))}
       </Table>
+
       <PageNavigation page={page} setPage={setPage} />
     </>
   );
