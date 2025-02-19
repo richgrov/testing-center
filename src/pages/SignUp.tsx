@@ -8,17 +8,17 @@ import {
 } from "@/components/ui/table";
 import { AuthContext, parsePocketbaseDate, pocketBase } from "@/pocketbase";
 import { useContext, useEffect, useState } from "react";
-import * as React from "react"
-import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import * as React from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
 const enrollmentsCollection = pocketBase.collection("test_enrollments");
 
@@ -56,35 +56,43 @@ function PageNavigation({ page, setPage }: PageNavigationProps) {
 
 export function SignUpPage() {
   const auth = useContext(AuthContext);
-  const [date, setDate] = React.useState(new Date())
-  const [open, setOpen] = React.useState(false);
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
   const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>([]);
   const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(new Set());
-
-  const [enrollments, setEnrollments] = useState(new Array<Enrollment>());
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
 
   useEffect(() => {
     enrollmentsCollection
       .getList(page, 100, { expand: "test", sort: "-start_test_at" })
       .then((data) => {
-        setEnrollments(data.items as any[] as Enrollment[]);
+        const allEnrollments = data.items as any[] as Enrollment[];
+        setEnrollments(allEnrollments);
+
+        // Automatically filter enrollments based on today's date upon initial load
+        const todayStr = format(new Date(), "yyyy-MM-dd");
+        const filtered = allEnrollments.filter((e) => {
+          const enrollmentDateStr = format(
+            parsePocketbaseDate(e.start_test_at),
+            "yyyy-MM-dd"
+          );
+          return enrollmentDateStr === todayStr;
+        });
+        setFilteredEnrollments(filtered);
       });
   }, [page]);
 
-  enrollmentsCollection.subscribe("*", (data) => {
-    console.log(data);
-  });
-
   useEffect(() => {
-    if (enrollments.length > 0 && date) {
-      const selectedDateStr = format(date, "yyyy-MM-dd"); // Convert selected date to "YYYY-MM-DD"
-
+    if (date && enrollments.length > 0) {
+      const selectedDateStr = format(date, "yyyy-MM-dd");
       const filtered = enrollments.filter((e) => {
-        const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
+        const enrollmentDateStr = format(
+          parsePocketbaseDate(e.start_test_at),
+          "yyyy-MM-dd"
+        );
         return enrollmentDateStr === selectedDateStr;
       });
-
       setFilteredEnrollments(filtered);
     }
   }, [date, enrollments]);
@@ -115,12 +123,15 @@ export function SignUpPage() {
       <br />
 
       <div>
-
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               variant={"outline"}
-              className={cn("w-[240px] justify-start text-left font-normal", !date && "text-muted-foreground")}>
+              className={cn(
+                "w-[240px] justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
               <CalendarIcon />
               {date ? format(date, "PPP") : <span>Pick a date</span>}
             </Button>
@@ -130,20 +141,21 @@ export function SignUpPage() {
               mode="single"
               selected={date}
               onSelect={(newDate) => {
-                setDate(newDate); //Its only angry that it dosn't have a const value. It works just fine.
-                setOpen(false);
-              }}
-              initialFocus />
+                if (newDate) {
+                  setDate(newDate);
+                  setOpen(false);
+                }
+              }}              
+              initialFocus
+            />
           </PopoverContent>
         </Popover>
-
       </div>
       <br />
 
       <Table className="max-w-screen-lg mx-auto">
         <TableHeader>
           <TableRow>
-            {/* Always render the first header, even when no checkboxes are selected */}
             <TableHead>
               {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : ""}
             </TableHead>
@@ -164,13 +176,9 @@ export function SignUpPage() {
               />
             </TableCell>
             <TableCell>{e.canvas_student_name}</TableCell>
-            <TableCell>
-              {parsePocketbaseDate(e.start_test_at).toLocaleString()}
-            </TableCell>
+            <TableCell>{parsePocketbaseDate(e.start_test_at).toLocaleString()}</TableCell>
             <TableCell>{e.duration_mins + " minutes"}</TableCell>
-            <TableCell>
-              {e.expand.test.course_code + " " + e.expand.test.section}
-            </TableCell>
+            <TableCell>{e.expand.test.course_code + " " + e.expand.test.section}</TableCell>
             <TableCell>Rules</TableCell>
           </TableRow>
         ))}
