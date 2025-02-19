@@ -30,6 +30,7 @@ interface Enrollment {
   start_test_at: string;
   expand: {
     test: {
+      name: string;
       course_code: string;
       section: string;
     };
@@ -145,12 +146,13 @@ export function SignUpPage() {
           <TableRow>
             {/* Always render the first header, even when no checkboxes are selected */}
             <TableHead>
-              {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : ""}
+              {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : " "}
             </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Duration</TableHead>
             <TableHead>Course</TableHead>
+            <TableHead>Test Name</TableHead>
             <TableHead>Rules</TableHead>
           </TableRow>
         </TableHeader>
@@ -170,6 +172,9 @@ export function SignUpPage() {
             <TableCell>{e.duration_mins + " minutes"}</TableCell>
             <TableCell>
               {e.expand.test.course_code + " " + e.expand.test.section}
+            </TableCell>
+            <TableCell>
+              {e.expand.test.name }
             </TableCell>
             <TableCell>Rules</TableCell>
           </TableRow>
