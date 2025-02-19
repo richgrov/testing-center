@@ -74,10 +74,7 @@ export function SignUpPage() {
         // Automatically filter enrollments based on today's date upon initial load
         const todayStr = format(new Date(), "yyyy-MM-dd");
         const filtered = allEnrollments.filter((e) => {
-          const enrollmentDateStr = format(
-            parsePocketbaseDate(e.start_test_at),
-            "yyyy-MM-dd"
-          );
+          const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
           return enrollmentDateStr === todayStr;
         });
         setFilteredEnrollments(filtered);
@@ -88,15 +85,14 @@ export function SignUpPage() {
     if (date && enrollments.length > 0) {
       const selectedDateStr = format(date, "yyyy-MM-dd");
       const filtered = enrollments.filter((e) => {
-        const enrollmentDateStr = format(
-          parsePocketbaseDate(e.start_test_at),
-          "yyyy-MM-dd"
-        );
+        const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
         return enrollmentDateStr === selectedDateStr;
       });
+
       setFilteredEnrollments(filtered);
     }
-  }, [date, enrollments]);
+  }, [date]);
+
 
   const handleCheckboxChange = (id: number) => {
     setSelectedEnrollments((prevSelected) => {
@@ -146,7 +142,7 @@ export function SignUpPage() {
                   setDate(newDate);
                   setOpen(false);
                 }
-              }}              
+              }}
               initialFocus
             />
           </PopoverContent>
