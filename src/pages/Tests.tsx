@@ -16,24 +16,8 @@ interface Test {
   rules: string;
 }
 
-function convertToLocalTime(utcDate: string) {
-  const date = new Date(utcDate + "Z");
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-  };
-  return date.toLocaleDateString('en-US', options); // Format as MM/DD/YYYY
-}
-
 function generateId() {
-  return Math.random().toString(36).substr(2, 7) + Math.random().toString(36).substr(2, 8); // total length will be 15
-}
-
-function formatDateForInput(dateStr: string) {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  return date.toISOString().slice(0, 10); // Format as YYYY-MM-DD (date only)
+  return Math.random().toString(36).substr(2, 7) + Math.random().toString(36).substr(2, 8);
 }
 
 function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
@@ -44,41 +28,34 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-  
+
     if (name === "opens" || name === "closes") {
-      // Ensure you handle the date format correctly
       const localDate = new Date(value);
-      const formattedDate = localDate.toISOString().slice(0, 10); // Extract date only in YYYY-MM-DD format
-      setFormData({ ...formData, [name]: formattedDate });
+      localDate.setUTCHours(12, 0, 0, 0); // Prevents timezone shifts
+      setFormData({ ...formData, [name]: localDate.toISOString() });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   }
-  
+
   function formatDateForInput(dateStr: string) {
     if (!dateStr) return "";
-    // Ensure it's in the format YYYY-MM-DD
-    return dateStr.slice(0, 10);
+    const date = new Date(dateStr);
+    return date.toISOString().slice(0, 10); // Ensures proper display in input
   }
 
   async function handleSubmit() {
     try {
-      // Ensure that 'opens' and 'closes' are properly formatted as ISO strings
-      const formattedOpens = new Date(formData.opens).toISOString();
-      const formattedCloses = new Date(formData.closes).toISOString();
-  
       const testData = {
         ...formData,
-        opens: formattedOpens,
-        closes: formattedCloses,
+        opens: new Date(formData.opens).toISOString(),
+        closes: new Date(formData.closes).toISOString(),
       };
-  
+
       let savedTest;
       if (test?.id) {
-        // Update existing test
         savedTest = await pocketBase.collection("tests").update(test.id, testData);
       } else {
-        // Create new test
         savedTest = await pocketBase.collection("tests").create(testData);
       }
       onSave(savedTest);
@@ -118,7 +95,7 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
         <Input name="duration_mins" type="number" value={formData.duration_mins} onChange={handleChange} placeholder="Duration (mins)" />
 
         <label>Rules</label>
-        <Input name="rules" value={formData.rules || ""} onChange={handleChange} placeholder="Rules"/>
+        <Input name="rules" value={formData.rules || ""} onChange={handleChange} placeholder="Rules" />
 
         <Button onClick={handleSubmit}>Save</Button>
       </DialogContent>
@@ -127,12 +104,11 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
 }
 
 function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) => void }) {
-
   function formatDateForDisplay(dateStr: string) {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Ensure two-digit month
-    const day = date.getDate().toString().padStart(2, "0"); // Ensure two-digit day
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${month}-${day}-${year}`;
   }
@@ -159,12 +135,11 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
 export function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
 
-  // Fetch tests from PocketBase on component mount
   useEffect(() => {
     async function fetchTests() {
       try {
         const records = await pocketBase.collection("tests").getFullList();
-        setTests(records); //it works just fine and is angry for no reason
+        setTests(records);
       } catch (error) {
         console.error("Error fetching tests:", error);
       }
