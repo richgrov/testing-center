@@ -20,6 +20,13 @@ function generateId() {
   return Math.random().toString(36).substr(2, 7) + Math.random().toString(36).substr(2, 8);
 }
 
+// Ensures dates are stored correctly in UTC
+function ensureDateAtTime(dateStr: string, hour: number, minute: number) {
+  const date = new Date(dateStr);
+  date.setUTCHours(hour, minute, 0, 0); // Set to the specific hour and minute in UTC
+  return date.toISOString();
+}
+
 function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
   const [formData, setFormData] = useState<Test>(
     test || { id: generateId(), name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "" }
@@ -29,10 +36,10 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
 
-    if (name === "opens" || name === "closes") {
-      const localDate = new Date(value);
-      localDate.setUTCHours(12, 0, 0, 0); // Prevents timezone shifts
-      setFormData({ ...formData, [name]: localDate.toISOString() });
+    if (name === "opens") {
+      setFormData({ ...formData, opens: ensureDateAtTime(value, 0, 0) }); // Set opening time to 00:00 UTC
+    } else if (name === "closes") {
+      setFormData({ ...formData, closes: ensureDateAtTime(value, 23, 59) }); // Set closing time to 23:59 UTC
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -40,16 +47,15 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
 
   function formatDateForInput(dateStr: string) {
     if (!dateStr) return "";
-    const date = new Date(dateStr);
-    return date.toISOString().slice(0, 10); // Ensures proper display in input
+    return new Date(dateStr).toISOString().slice(0, 10); // Ensures proper display in input field
   }
 
   async function handleSubmit() {
     try {
       const testData = {
         ...formData,
-        opens: new Date(formData.opens).toISOString(),
-        closes: new Date(formData.closes).toISOString(),
+        opens: ensureDateAtTime(formData.opens, 0, 0),
+        closes: ensureDateAtTime(formData.closes, 23, 59),
       };
 
       let savedTest;
