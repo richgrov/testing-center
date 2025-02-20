@@ -27,7 +27,7 @@ function convertToLocalTime(utcDate: string) {
 }
 
 function generateId() {
-  return Math.random().toString(36).substr(2, 9);
+  return Math.random().toString(36).substr(2, 7) + Math.random().toString(36).substr(2, 8); // total length will be 15
 }
 
 function formatDateForInput(dateStr: string) {
@@ -44,21 +44,48 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-
+  
     if (name === "opens" || name === "closes") {
-      const datePart = value; // Use the date part directly, no need to split
-      let fixedTime = name === "opens" ? "00:00" : "23:59"; // Set time accordingly
-      const localDateTime = new Date(`${datePart}T${fixedTime}`);
-      setFormData({ ...formData, [name]: localDateTime.toISOString().slice(0, 16) });
+      // Ensure you handle the date format correctly
+      const localDate = new Date(value);
+      const formattedDate = localDate.toISOString().slice(0, 10); // Extract date only in YYYY-MM-DD format
+      setFormData({ ...formData, [name]: formattedDate });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   }
+  
+  function formatDateForInput(dateStr: string) {
+    if (!dateStr) return "";
+    // Ensure it's in the format YYYY-MM-DD
+    return dateStr.slice(0, 10);
+  }
 
-  function handleSubmit() {
-    onSave(formData);
-    setOpen(false);
-    alert("Test added successfully!");
+  async function handleSubmit() {
+    try {
+      // Ensure that 'opens' and 'closes' are properly formatted as ISO strings
+      const formattedOpens = new Date(formData.opens).toISOString();
+      const formattedCloses = new Date(formData.closes).toISOString();
+  
+      const testData = {
+        ...formData,
+        opens: formattedOpens,
+        closes: formattedCloses,
+      };
+  
+      let savedTest;
+      if (test?.id) {
+        // Update existing test
+        savedTest = await pocketBase.collection("tests").update(test.id, testData);
+      } else {
+        // Create new test
+        savedTest = await pocketBase.collection("tests").create(testData);
+      }
+      onSave(savedTest);
+      setOpen(false);
+    } catch (error) {
+      console.error("Error saving test:", error);
+    }
   }
 
   return (
