@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { pocketBase } from "@/pocketbase"; // Ensure this is correctly imported
 
 interface Test {
   id: string;
@@ -40,7 +41,7 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
     test || { id: generateId(), name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "" }
   );
   const [open, setOpen] = useState(false);
-  
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
 
@@ -91,7 +92,7 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
 
         <label>Rules</label>
         <Input name="rules" value={formData.rules || ""} onChange={handleChange} placeholder="Rules"/>
-        
+
         <Button onClick={handleSubmit}>Save</Button>
       </DialogContent>
     </Dialog>
@@ -99,6 +100,16 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
 }
 
 function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) => void }) {
+
+  function formatDateForDisplay(dateStr: string) {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Ensure two-digit month
+    const day = date.getDate().toString().padStart(2, "0"); // Ensure two-digit day
+    const year = date.getFullYear();
+    return `${month}-${day}-${year}`;
+  }
+
   return (
     <Card>
       <CardHeader className="flex justify-between items-center">
@@ -109,8 +120,8 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
         <TestDialog test={test} onSave={onEdit} />
       </CardHeader>
       <CardContent>
-        <p>Opens: {convertToLocalTime(test.opens)}</p> 
-        <p>Closes: {convertToLocalTime(test.closes)}</p>
+        <p>Opens: {formatDateForDisplay(test.opens)}</p> 
+        <p>Closes: {formatDateForDisplay(test.closes)}</p>
         <p>Duration: {test.duration_mins} mins</p>
         <p>Rules: {test.rules}</p>
       </CardContent>
@@ -121,12 +132,25 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
 export function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
 
-  function addTest(newTest: Test) {
+  // Fetch tests from PocketBase on component mount
+  useEffect(() => {
+    async function fetchTests() {
+      try {
+        const records = await pocketBase.collection("tests").getFullList();
+        setTests(records); //it works just fine and is angry for no reason
+      } catch (error) {
+        console.error("Error fetching tests:", error);
+      }
+    }
+    fetchTests();
+  }, []);
+
+  async function addTest(newTest: Test) {
     setTests([...tests, newTest]);
   }
 
-  function editTest(updatedTest: Test) {
-    setTests(tests.map(t => t.id === updatedTest.id ? updatedTest : t));
+  async function editTest(updatedTest: Test) {
+    setTests(tests.map(t => (t.id === updatedTest.id ? updatedTest : t)));
   }
 
   return (
