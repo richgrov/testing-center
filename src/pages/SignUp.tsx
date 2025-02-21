@@ -65,21 +65,22 @@ export function SignUpPage() {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    enrollmentsCollection
-      .getList(page, 100, { expand: "test", sort: "-start_test_at" })
-      .then((data) => {
-        const allEnrollments = data.items as any[] as Enrollment[];
-        setEnrollments(allEnrollments);
+    if (!date) return;
 
-        // Automatically filter enrollments based on today's date upon initial load
-        const todayStr = format(new Date(), "yyyy-MM-dd");
-        const filtered = allEnrollments.filter((e) => {
-          const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
-          return enrollmentDateStr === todayStr;
-        });
-        setFilteredEnrollments(filtered);
+    const selectedDateStr = format(date, "yyyy-MM-dd");
+
+    enrollmentsCollection
+      .getList(page, 100, {
+        expand: "test",
+        sort: "-start_test_at",
+        filter: `start_test_at >= "${selectedDateStr} 00:00:00" && start_test_at <= "${selectedDateStr} 23:59:59"`
+      })
+      .then((data) => {
+        setEnrollments(data.items as any[] as Enrollment[]);
+        setFilteredEnrollments(data.items as any[] as Enrollment[]);
       });
-  }, [page]);
+  }, [date, page]);
+
 
   useEffect(() => {
     if (date && enrollments.length > 0) {
