@@ -16,10 +16,6 @@ interface Test {
   rules: string;
 }
 
-function generateId() {
-  return Math.random().toString(36).substr(2, 7) + Math.random().toString(36).substr(2, 8);
-}
-
 // Ensures dates are stored correctly in UTC
 function ensureDateAtTime(dateStr: string, hour: number, minute: number) {
   const date = new Date(dateStr);
@@ -29,7 +25,7 @@ function ensureDateAtTime(dateStr: string, hour: number, minute: number) {
 
 function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
   const [formData, setFormData] = useState<Test>(
-    test || { id: generateId(), name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "" }
+    test || { id:"", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "" }
   );
   const [open, setOpen] = useState(false);
 

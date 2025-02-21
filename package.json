@@ -28,7 +28,6 @@
     "lucide-react": "^0.471.2",
     "pocketbase": "^0.25.0",
     "react": "^18.3.1",
-    "react-day-picker": "8.10.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.2",
     "react-router": "^7.1.3",

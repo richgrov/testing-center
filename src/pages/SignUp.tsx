@@ -76,10 +76,10 @@ export function SignUpPage() {
     }
   
     enrollmentsCollection
-      .getList(page + 1, 10, {  // ✅ Ensure correct pagination (1-based index)
+      .getList(page + 1, 10, { 
         expand: "test",
         sort: "-start_test_at",
-        filter: filterQuery, // ✅ Filter applied in the database before fetching
+        filter: filterQuery, 
       })
       .then((data) => {
         const enrollments: Enrollment[] = data.items.map((item) => ({
