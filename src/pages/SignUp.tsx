@@ -33,6 +33,7 @@ interface Enrollment {
       name: string;
       course_code: string;
       section: string;
+      rules: string;
     };
   };
   unlock_after: string;
@@ -63,24 +64,46 @@ export function SignUpPage() {
   const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(new Set());
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
-
+  const [studentName, setStudentName] = useState("");
   useEffect(() => {
     if (!date) return;
-
+  
     const selectedDateStr = format(date, "yyyy-MM-dd");
-
+    let filterQuery = `start_test_at >= "${selectedDateStr} 00:00:00" && start_test_at <= "${selectedDateStr} 23:59:59"`;
+  
+    if (studentName.trim() !== "") {
+      filterQuery += ` && canvas_student_name ~ "${studentName.trim()}"`; // Search for name in PocketBase
+    }
+  
     enrollmentsCollection
-      .getList(page, 100, {
+      .getList(page + 1, 10, {  // ✅ Ensure correct pagination (1-based index)
         expand: "test",
         sort: "-start_test_at",
-        filter: `start_test_at >= "${selectedDateStr} 00:00:00" && start_test_at <= "${selectedDateStr} 23:59:59"`
+        filter: filterQuery, // ✅ Filter applied in the database before fetching
       })
       .then((data) => {
-        setEnrollments(data.items as any[] as Enrollment[]);
-        setFilteredEnrollments(data.items as any[] as Enrollment[]);
-      });
-  }, [date, page]);
-
+        const enrollments: Enrollment[] = data.items.map((item) => ({
+          canvas_student_id: item.canvas_student_id,
+          canvas_student_name: item.canvas_student_name,
+          duration_mins: item.duration_mins,
+          link_sent: item.link_sent,
+          start_test_at: item.start_test_at,
+          unlock_after: item.unlock_after,
+          expand: {
+            test: {
+              name: item.expand?.test?.name || "",
+              course_code: item.expand?.test?.course_code || "",
+              section: item.expand?.test?.section || "",
+              rules: item.expand?.test?.rules || "No rules provided",
+            },
+          },
+        }));
+  
+        setEnrollments(enrollments);
+        setFilteredEnrollments(enrollments);
+      })
+      .catch((error) => console.error("Error fetching enrollments:", error));
+  }, [date, studentName, page]);
 
   useEffect(() => {
     if (date && enrollments.length > 0) {
@@ -117,19 +140,20 @@ export function SignUpPage() {
 
   return (
     <>
-      <PageNavigation page={page} setPage={setPage} />
-      <br />
+      <div className="flex gap-4">
+        {/* Search Field */}
+        <input
+          type="text"
+          placeholder="Search by student name..."
+          value={studentName}
+          onChange={(e) => setStudentName(e.target.value)}
+          className="border rounded p-2"
+        />
 
-      <div>
+        {/* Date Picker (unchanged) */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "w-[240px] justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
+            <Button variant={"outline"} className="w-[240px] text-left">
               <CalendarIcon />
               {date ? format(date, "PPP") : <span>Pick a date</span>}
             </Button>
@@ -183,7 +207,7 @@ export function SignUpPage() {
             <TableCell>
               {e.expand.test.name}
             </TableCell>
-            <TableCell>Rules</TableCell>
+            <TableCell>{e.expand.test.rules}</TableCell>
           </TableRow>
         ))}
       </Table>
