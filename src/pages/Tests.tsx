@@ -60,7 +60,7 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
       } else {
         savedTest = await pocketBase.collection("tests").create(testData);
       }
-      onSave(savedTest);
+      onSave(savedTest);// it works but is angry 
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
