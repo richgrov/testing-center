@@ -63,6 +63,7 @@ export function SignUpPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
   const [studentName, setStudentName] = useState("");
+  
   useEffect(() => {
     if (!date) return;
   
@@ -70,17 +71,17 @@ export function SignUpPage() {
     let filterQuery = `start_test_at >= "${selectedDateStr} 00:00:00" && start_test_at <= "${selectedDateStr} 23:59:59"`;
   
     if (studentName.trim() !== "") {
-      filterQuery += ` && canvas_student_name ~ "${studentName.trim()}"`; // Search for name in PocketBase
+      filterQuery += ` && canvas_student_name ~ "${studentName.trim()}"`;
     }
   
     enrollmentsCollection
-      .getList(page + 1, 10, { 
+      .getFullList({
         expand: "test",
         sort: "-start_test_at",
-        filter: filterQuery, 
+        filter: filterQuery,
       })
       .then((data) => {
-        const enrollments: Enrollment[] = data.items.map((item) => ({
+        const enrollments: Enrollment[] = data.map((item) => ({
           canvas_student_id: item.canvas_student_id,
           canvas_student_name: item.canvas_student_name,
           duration_mins: item.duration_mins,
@@ -101,7 +102,8 @@ export function SignUpPage() {
         setFilteredEnrollments(enrollments);
       })
       .catch((error) => console.error("Error fetching enrollments:", error));
-  }, [date, studentName, page]);
+  }, [date, studentName]);
+  
 
   useEffect(() => {
     if (date && enrollments.length > 0) {
@@ -138,7 +140,7 @@ export function SignUpPage() {
 
   return (
     <>
-      <div className="flex gap-4">
+      <div className="flex gap-4 mt-6">
         {/* Search Field */}
         <input
           type="text"
