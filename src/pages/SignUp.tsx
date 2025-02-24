@@ -8,17 +8,15 @@ import {
 } from "@/components/ui/table";
 import { AuthContext, parsePocketbaseDate, pocketBase } from "@/pocketbase";
 import { useContext, useEffect, useState } from "react";
-import * as React from "react"
-import { format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
-
-import { cn } from "@/lib/utils"
-import { Calendar } from "@/components/ui/calendar"
+import * as React from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/components/ui/popover";
 
 const enrollmentsCollection = pocketBase.collection("test_enrollments");
 
@@ -30,8 +28,10 @@ interface Enrollment {
   start_test_at: string;
   expand: {
     test: {
+      name: string;
       course_code: string;
       section: string;
+      rules: string;
     };
   };
   unlock_after: string;
@@ -56,30 +56,58 @@ function PageNavigation({ page, setPage }: PageNavigationProps) {
 
 export function SignUpPage() {
   const auth = useContext(AuthContext);
-  const [date, setDate] = React.useState(new Date())
-  const [open, setOpen] = React.useState(false);
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
   const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>([]);
   const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(new Set());
-
-  const [enrollments, setEnrollments] = useState(new Array<Enrollment>());
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
-
+  const [studentName, setStudentName] = useState("");
+  
   useEffect(() => {
+    if (!date) return;
+  
+    const selectedDateStr = format(date, "yyyy-MM-dd");
+    let filterQuery = `start_test_at >= "${selectedDateStr} 00:00:00" && start_test_at <= "${selectedDateStr} 23:59:59"`;
+  
+    if (studentName.trim() !== "") {
+      filterQuery += ` && canvas_student_name ~ "${studentName.trim()}"`;
+    }
+  
     enrollmentsCollection
-      .getList(page, 100, { expand: "test", sort: "-start_test_at" })
+      .getFullList({
+        expand: "test",
+        sort: "-start_test_at",
+        filter: filterQuery,
+      })
       .then((data) => {
-        setEnrollments(data.items as any[] as Enrollment[]);
-      });
-  }, [page]);
-
-  enrollmentsCollection.subscribe("*", (data) => {
-    console.log(data);
-  });
+        const enrollments: Enrollment[] = data.map((item) => ({
+          canvas_student_id: item.canvas_student_id,
+          canvas_student_name: item.canvas_student_name,
+          duration_mins: item.duration_mins,
+          link_sent: item.link_sent,
+          start_test_at: item.start_test_at,
+          unlock_after: item.unlock_after,
+          expand: {
+            test: {
+              name: item.expand?.test?.name || "",
+              course_code: item.expand?.test?.course_code || "",
+              section: item.expand?.test?.section || "",
+              rules: item.expand?.test?.rules || "No rules provided",
+            },
+          },
+        }));
+  
+        setEnrollments(enrollments);
+        setFilteredEnrollments(enrollments);
+      })
+      .catch((error) => console.error("Error fetching enrollments:", error));
+  }, [date, studentName]);
+  
 
   useEffect(() => {
-    if (enrollments.length > 0 && date) {
-      const selectedDateStr = format(date, "yyyy-MM-dd"); // Convert selected date to "YYYY-MM-DD"
-
+    if (date && enrollments.length > 0) {
+      const selectedDateStr = format(date, "yyyy-MM-dd");
       const filtered = enrollments.filter((e) => {
         const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
         return enrollmentDateStr === selectedDateStr;
@@ -87,7 +115,8 @@ export function SignUpPage() {
 
       setFilteredEnrollments(filtered);
     }
-  }, [date, enrollments]);
+  }, [date]);
+
 
   const handleCheckboxChange = (id: number) => {
     setSelectedEnrollments((prevSelected) => {
@@ -111,16 +140,20 @@ export function SignUpPage() {
 
   return (
     <>
-      <PageNavigation page={page} setPage={setPage} />
-      <br />
+      <div className="flex gap-4 mt-6">
+        {/* Search Field */}
+        <input
+          type="text"
+          placeholder="Search by student name..."
+          value={studentName}
+          onChange={(e) => setStudentName(e.target.value)}
+          className="border rounded p-2"
+        />
 
-      <div>
-
+        {/* Date Picker (unchanged) */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn("w-[240px] justify-start text-left font-normal", !date && "text-muted-foreground")}>
+            <Button variant={"outline"} className="w-[240px] text-left">
               <CalendarIcon />
               {date ? format(date, "PPP") : <span>Pick a date</span>}
             </Button>
@@ -130,26 +163,29 @@ export function SignUpPage() {
               mode="single"
               selected={date}
               onSelect={(newDate) => {
-                setDate(newDate); //Its only angry that it dosn't have a const value. It works just fine.
-                setOpen(false);
+                if (newDate) {
+                  setDate(newDate);
+                  setOpen(false);
+                }
               }}
-              initialFocus />
+              initialFocus
+            />
           </PopoverContent>
         </Popover>
-
       </div>
       <br />
 
       <Table className="max-w-screen-lg mx-auto">
         <TableHeader>
           <TableRow>
-            {selectedEnrollments.size > 0 && (
-              <TableHead>{selectedEnrollments.size} / 100</TableHead>
-            )}
+            <TableHead>
+              {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : " "}
+            </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Duration</TableHead>
             <TableHead>Course</TableHead>
+            <TableHead>Test Name</TableHead>
             <TableHead>Rules</TableHead>
           </TableRow>
         </TableHeader>
@@ -163,17 +199,19 @@ export function SignUpPage() {
               />
             </TableCell>
             <TableCell>{e.canvas_student_name}</TableCell>
-            <TableCell>
-              {parsePocketbaseDate(e.start_test_at).toLocaleString()}
-            </TableCell>
+            <TableCell>{parsePocketbaseDate(e.start_test_at).toLocaleString()}</TableCell>
             <TableCell>{e.duration_mins + " minutes"}</TableCell>
             <TableCell>
               {e.expand.test.course_code + " " + e.expand.test.section}
             </TableCell>
-            <TableCell>Rules</TableCell>
+            <TableCell>
+              {e.expand.test.name}
+            </TableCell>
+            <TableCell>{e.expand.test.rules}</TableCell>
           </TableRow>
         ))}
       </Table>
+
       <PageNavigation page={page} setPage={setPage} />
     </>
   );
