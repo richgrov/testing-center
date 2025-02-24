@@ -56,8 +56,11 @@ function PageNavigation({ page, setPage }: PageNavigationProps) {
 
 export function SignUpPage() {
   const auth = useContext(AuthContext);
-
-  const [enrollments, setEnrollments] = useState(new Array<Enrollment>());
+  const [date, setDate] = useState(new Date());
+  const [open, setOpen] = useState(false);
+  const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>([]);
+  const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(new Set());
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
   const [studentName, setStudentName] = useState("");
   
@@ -78,13 +81,54 @@ export function SignUpPage() {
         filter: filterQuery,
       })
       .then((data) => {
-        setEnrollments(data.items as any[] as Enrollment[]);
-      });
-  }, [page]);
+        const enrollments: Enrollment[] = data.map((item) => ({
+          canvas_student_id: item.canvas_student_id,
+          canvas_student_name: item.canvas_student_name,
+          duration_mins: item.duration_mins,
+          link_sent: item.link_sent,
+          start_test_at: item.start_test_at,
+          unlock_after: item.unlock_after,
+          expand: {
+            test: {
+              name: item.expand?.test?.name || "",
+              course_code: item.expand?.test?.course_code || "",
+              section: item.expand?.test?.section || "",
+              rules: item.expand?.test?.rules || "No rules provided",
+            },
+          },
+        }));
+  
+        setEnrollments(enrollments);
+        setFilteredEnrollments(enrollments);
+      })
+      .catch((error) => console.error("Error fetching enrollments:", error));
+  }, [date, studentName]);
+  
 
-  enrollmentsCollection.subscribe("*", (data) => {
-    console.log(data);
-  });
+  useEffect(() => {
+    if (date && enrollments.length > 0) {
+      const selectedDateStr = format(date, "yyyy-MM-dd");
+      const filtered = enrollments.filter((e) => {
+        const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
+        return enrollmentDateStr === selectedDateStr;
+      });
+
+      setFilteredEnrollments(filtered);
+    }
+  }, [date]);
+
+
+  const handleCheckboxChange = (id: number) => {
+    setSelectedEnrollments((prevSelected) => {
+      const newSelected = new Set(prevSelected);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      return newSelected;
+    });
+  };
 
   if (!auth) {
     return (
@@ -96,10 +140,47 @@ export function SignUpPage() {
 
   return (
     <>
-      <PageNavigation page={page} setPage={setPage} />
+      <div className="flex gap-4 mt-6">
+        {/* Search Field */}
+        <input
+          type="text"
+          placeholder="Search by student name..."
+          value={studentName}
+          onChange={(e) => setStudentName(e.target.value)}
+          className="border rounded p-2"
+        />
+
+        {/* Date Picker (unchanged) */}
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button variant={"outline"} className="w-[240px] text-left">
+              <CalendarIcon />
+              {date ? format(date, "PPP") : <span>Pick a date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={(newDate) => {
+                if (newDate) {
+                  setDate(newDate);
+                  setOpen(false);
+                }
+              }}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+      <br />
+
       <Table className="max-w-screen-lg mx-auto">
         <TableHeader>
           <TableRow>
+            <TableHead>
+              {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : " "}
+            </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Time</TableHead>
             <TableHead>Duration</TableHead>
@@ -110,7 +191,6 @@ export function SignUpPage() {
         </TableHeader>
         {filteredEnrollments.map((e, i) => (
           <TableRow key={i}>
-            <TableCell>{e.canvas_student_name}</TableCell>
             <TableCell>
               <input
                 type="checkbox"
