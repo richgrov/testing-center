@@ -15,6 +15,7 @@ interface Test {
   section?: string;
   rules: string;
   max_enrollments: number; // Add this to the Test interface to track max enrollments
+  current_enrollments: number;
 }
 
 function ensureDateAtTime(dateStr: string, hour: number, minute: number) {
@@ -30,7 +31,7 @@ function formatDateForInput(dateStr: string) {
 
 function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
   const [formData, setFormData] = useState<Test>(
-    test || { id: "", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "", max_enrollments: 0 }
+    test || { id: "", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "", max_enrollments: 0, current_enrollments: 0}
   );
   const [open, setOpen] = useState(false);
 
@@ -114,18 +115,29 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
   useEffect(() => {
     async function fetchEnrollmentCount() {
       try {
-        // Fetch enrollments by comparing the test name or id
-        const enrollments = await pocketBase.collection("test_enrollments").getList(1, 50, {
-          filter: `test_id = "${test.name}"`,  // You can also filter by test name, e.g., `filter: "test_name = '${test.name}'"`
+        // Fetch enrollments by referencing the test's ID
+        const enrollments = await pocketBase.collection("test_enrollments").getFullList({
+          filter: `test = "${test.id}"`,  // Ensure it's filtering by the correct test ID
         });
-        setEnrollmentCount(enrollments.total);
+
+        // Check if enrollments is an object and contains the total count
+        if (enrollments && enrollments.length !== undefined) {
+          setEnrollmentCount(enrollments.length);  // Set the count from the response
+          
+          // Update the current_enrollments field in the parent component
+          const updatedTest = { ...test, current_enrollments: enrollments.length };
+          onEdit(updatedTest);  // Call onEdit to update the test with the new enrollment count
+        } else {
+          console.error('Unexpected response structure:', enrollments);
+        }
       } catch (error) {
         console.error("Error fetching enrollments:", error);
       }
     }
+  
     fetchEnrollmentCount();
-  }, [test.id, test.name]);
-
+  }, [test.id, onEdit]);  // Re-run effect when test.id changes
+  
   function formatDateForDisplay(dateStr: string) {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -151,7 +163,7 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
         <p>Rules: {test.rules}</p>
         <p>
           {enrollmentCount} / {test.max_enrollments} students signed up
-        </p> {/* Display count in 0/0 format */}
+        </p>
       </CardContent>
     </Card>
   );
