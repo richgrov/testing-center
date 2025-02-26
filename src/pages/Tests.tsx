@@ -14,18 +14,24 @@ interface Test {
   course_code: string;
   section?: string;
   rules: string;
+  max_enrollments: number; // Add this to the Test interface to track max enrollments
+  current_enrollments: number;
 }
 
-// Ensures dates are stored correctly in UTC
 function ensureDateAtTime(dateStr: string, hour: number, minute: number) {
   const date = new Date(dateStr);
   date.setUTCHours(hour, minute, 0, 0); // Set to the specific hour and minute in UTC
   return date.toISOString();
 }
 
+function formatDateForInput(dateStr: string) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toISOString().slice(0, 10); // Ensures proper display in input field
+}
+
 function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
   const [formData, setFormData] = useState<Test>(
-    test || { id:"", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "" }
+    test || { id: "", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "", max_enrollments: 0, current_enrollments: 0}
   );
   const [open, setOpen] = useState(false);
 
@@ -39,11 +45,6 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
     } else {
       setFormData({ ...formData, [name]: value });
     }
-  }
-
-  function formatDateForInput(dateStr: string) {
-    if (!dateStr) return "";
-    return new Date(dateStr).toISOString().slice(0, 10); // Ensures proper display in input field
   }
 
   async function handleSubmit() {
@@ -60,7 +61,7 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
       } else {
         savedTest = await pocketBase.collection("tests").create(testData);
       }
-      onSave(savedTest);// it works but is angry 
+      onSave(savedTest); // it works but is angry
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
@@ -99,6 +100,9 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
         <label>Rules</label>
         <Input name="rules" value={formData.rules || ""} onChange={handleChange} placeholder="Rules" />
 
+        <label>Max Enrollments</label>
+        <Input name="max_enrollments" type="number" value={formData.max_enrollments} onChange={handleChange} placeholder="Maximum number of students" />
+
         <Button onClick={handleSubmit}>Save</Button>
       </DialogContent>
     </Dialog>
@@ -106,6 +110,34 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
 }
 
 function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) => void }) {
+  const [enrollmentCount, setEnrollmentCount] = useState<number>(0);
+
+  useEffect(() => {
+    async function fetchEnrollmentCount() {
+      try {
+        // Fetch enrollments by referencing the test's ID
+        const enrollments = await pocketBase.collection("test_enrollments").getFullList({
+          filter: `test = "${test.id}"`,  // Ensure it's filtering by the correct test ID
+        });
+
+        // Check if enrollments is an object and contains the total count
+        if (enrollments && enrollments.length !== undefined) {
+          setEnrollmentCount(enrollments.length);  // Set the count from the response
+          
+          // Update the current_enrollments field in the parent component
+          const updatedTest = { ...test, current_enrollments: enrollments.length };
+          onEdit(updatedTest);  // Call onEdit to update the test with the new enrollment count
+        } else {
+          console.error('Unexpected response structure:', enrollments);
+        }
+      } catch (error) {
+        console.error("Error fetching enrollments:", error);
+      }
+    }
+  
+    fetchEnrollmentCount();
+  }, [test.id, onEdit]);  // Re-run effect when test.id changes
+  
   function formatDateForDisplay(dateStr: string) {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -125,10 +157,13 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
         <TestDialog test={test} onSave={onEdit} />
       </CardHeader>
       <CardContent>
-        <p>Opens: {formatDateForDisplay(test.opens)}</p> 
+        <p>Opens: {formatDateForDisplay(test.opens)}</p>
         <p>Closes: {formatDateForDisplay(test.closes)}</p>
         <p>Duration: {test.duration_mins} mins</p>
         <p>Rules: {test.rules}</p>
+        <p>
+          {enrollmentCount} / {test.max_enrollments} students signed up
+        </p>
       </CardContent>
     </Card>
   );

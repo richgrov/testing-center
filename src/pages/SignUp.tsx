@@ -40,16 +40,19 @@ interface Enrollment {
 interface PageNavigationProps {
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
+  hasNext: boolean;
 }
 
-function PageNavigation({ page, setPage }: PageNavigationProps) {
+function PageNavigation({ page, setPage, hasNext }: PageNavigationProps) {
   return (
     <div className="flex items-center justify-center gap-4 my-2">
-      <Button onClick={() => setPage((page) => page - 1)} disabled={page === 0}>
+      <Button onClick={() => setPage(page - 1)} disabled={page === 0}>
         Previous
       </Button>
       <p>Page {page + 1}</p>
-      <Button onClick={() => setPage((page) => page + 1)}>Next</Button>
+      <Button onClick={() => setPage(page + 1)} disabled={!hasNext}>
+        Next
+      </Button>
     </div>
   );
 }
@@ -63,17 +66,18 @@ export function SignUpPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
   const [studentName, setStudentName] = useState("");
-  
+  const perPage = 100;
+
   useEffect(() => {
     if (!date) return;
-  
+
     const selectedDateStr = format(date, "yyyy-MM-dd");
     let filterQuery = `start_test_at >= "${selectedDateStr} 00:00:00" && start_test_at <= "${selectedDateStr} 23:59:59"`;
-  
+
     if (studentName.trim() !== "") {
       filterQuery += ` && canvas_student_name ~ "${studentName.trim()}"`;
     }
-  
+
     enrollmentsCollection
       .getFullList({
         expand: "test",
@@ -97,26 +101,18 @@ export function SignUpPage() {
             },
           },
         }));
-  
+
         setEnrollments(enrollments);
         setFilteredEnrollments(enrollments);
+        setPage(0); // Reset to first page when new data is fetched
       })
       .catch((error) => console.error("Error fetching enrollments:", error));
   }, [date, studentName]);
-  
 
-  useEffect(() => {
-    if (date && enrollments.length > 0) {
-      const selectedDateStr = format(date, "yyyy-MM-dd");
-      const filtered = enrollments.filter((e) => {
-        const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
-        return enrollmentDateStr === selectedDateStr;
-      });
-
-      setFilteredEnrollments(filtered);
-    }
-  }, [date]);
-
+  const paginatedEnrollments = filteredEnrollments.slice(
+    page * perPage,
+    (page + 1) * perPage
+  );
 
   const handleCheckboxChange = (id: number) => {
     setSelectedEnrollments((prevSelected) => {
@@ -140,8 +136,8 @@ export function SignUpPage() {
 
   return (
     <>
+      <PageNavigation page={page} setPage={setPage} hasNext={(page + 1) * perPage < filteredEnrollments.length} />
       <div className="flex gap-4 mt-6">
-        {/* Search Field */}
         <input
           type="text"
           placeholder="Search by student name..."
@@ -150,7 +146,6 @@ export function SignUpPage() {
           className="border rounded p-2"
         />
 
-        {/* Date Picker (unchanged) */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button variant={"outline"} className="w-[240px] text-left">
@@ -189,7 +184,7 @@ export function SignUpPage() {
             <TableHead>Rules</TableHead>
           </TableRow>
         </TableHeader>
-        {filteredEnrollments.map((e, i) => (
+        {paginatedEnrollments.map((e, i) => (
           <TableRow key={i}>
             <TableCell>
               <input
@@ -201,18 +196,12 @@ export function SignUpPage() {
             <TableCell>{e.canvas_student_name}</TableCell>
             <TableCell>{parsePocketbaseDate(e.start_test_at).toLocaleString()}</TableCell>
             <TableCell>{e.duration_mins + " minutes"}</TableCell>
-            <TableCell>
-              {e.expand.test.course_code + " " + e.expand.test.section}
-            </TableCell>
-            <TableCell>
-              {e.expand.test.name}
-            </TableCell>
+            <TableCell>{e.expand.test.course_code + " " + e.expand.test.section}</TableCell>
+            <TableCell>{e.expand.test.name}</TableCell>
             <TableCell>{e.expand.test.rules}</TableCell>
           </TableRow>
         ))}
       </Table>
-
-      <PageNavigation page={page} setPage={setPage} />
     </>
   );
 }
