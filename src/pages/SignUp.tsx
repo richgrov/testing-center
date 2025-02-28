@@ -40,19 +40,16 @@ interface Enrollment {
 interface PageNavigationProps {
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
-  hasNext: boolean;
 }
 
-function PageNavigation({ page, setPage, hasNext }: PageNavigationProps) {
+function PageNavigation({ page, setPage }: PageNavigationProps) {
   return (
     <div className="flex items-center justify-center gap-4 my-2">
-      <Button onClick={() => setPage(page - 1)} disabled={page === 0}>
+      <Button onClick={() => setPage((page) => page - 1)} disabled={page === 0}>
         Previous
       </Button>
       <p>Page {page + 1}</p>
-      <Button onClick={() => setPage(page + 1)} disabled={!hasNext}>
-        Next
-      </Button>
+      <Button onClick={() => setPage((page) => page + 1)}>Next</Button>
     </div>
   );
 }
@@ -61,8 +58,12 @@ export function SignUpPage() {
   const auth = useContext(AuthContext);
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
-  const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>([]);
-  const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(new Set());
+  const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>(
+    []
+  );
+  const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(
+    new Set()
+  );
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
   const [studentName, setStudentName] = useState("");
@@ -70,14 +71,14 @@ export function SignUpPage() {
 
   useEffect(() => {
     if (!date) return;
-  
+
     const selectedDateStr = format(date, "yyyy-MM-dd");
     let filterQuery = `start_test_at >= \"${selectedDateStr} 00:00:00\" && start_test_at <= \"${selectedDateStr} 23:59:59\"`;
-  
+
     if (studentName.trim() !== "") {
       filterQuery += ` && canvas_student_name ~ \"${studentName.trim()}\"`;
     }
-  
+
     enrollmentsCollection
       .getList(page + 1, perPage, {
         expand: "test",
@@ -102,6 +103,7 @@ export function SignUpPage() {
           },
         }));
         setEnrollments(enrollments);
+        setFilteredEnrollments(enrollments);
       })
       .catch((error) => console.error("Error fetching enrollments:", error));
   }, [date, studentName, page]);
@@ -133,7 +135,7 @@ export function SignUpPage() {
 
   return (
     <>
-      <PageNavigation page={page} setPage={setPage} hasNext={(page + 1) * perPage < filteredEnrollments.length} />
+      <PageNavigation page={page} setPage={setPage} />
       <div className="flex gap-4 mt-6">
         <input
           type="text"
@@ -171,7 +173,9 @@ export function SignUpPage() {
         <TableHeader>
           <TableRow>
             <TableHead>
-              {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : " "}
+              {selectedEnrollments.size > 0
+                ? `${selectedEnrollments.size} / 100`
+                : " "}
             </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Time</TableHead>
@@ -191,14 +195,19 @@ export function SignUpPage() {
               />
             </TableCell>
             <TableCell>{e.canvas_student_name}</TableCell>
-            <TableCell>{parsePocketbaseDate(e.start_test_at).toLocaleString()}</TableCell>
+            <TableCell>
+              {parsePocketbaseDate(e.start_test_at).toLocaleString()}
+            </TableCell>
             <TableCell>{e.duration_mins + " minutes"}</TableCell>
-            <TableCell>{e.expand.test.course_code + " " + e.expand.test.section}</TableCell>
+            <TableCell>
+              {e.expand.test.course_code + " " + e.expand.test.section}
+            </TableCell>
             <TableCell>{e.expand.test.name}</TableCell>
             <TableCell>{e.expand.test.rules}</TableCell>
           </TableRow>
         ))}
       </Table>
+      <PageNavigation page={page} setPage={setPage} />
     </>
   );
 }

@@ -115,35 +115,30 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
   useEffect(() => {
     async function fetchEnrollmentCount() {
       try {
-        // Fetch enrollments by referencing the test's ID
         const enrollments = await pocketBase.collection("test_enrollments").getFullList({
-          filter: `test = "${test.id}"`,  // Ensure it's filtering by the correct test ID
+          filter: `test = "${test.id}"`,
         });
-
-        // Check if enrollments is an object and contains the total count
-        if (enrollments && enrollments.length !== undefined) {
-          setEnrollmentCount(enrollments.length);  // Set the count from the response
-          
-          // Update the current_enrollments field in the parent component
-          const updatedTest = { ...test, current_enrollments: enrollments.length };
-          onEdit(updatedTest);  // Call onEdit to update the test with the new enrollment count
-        } else {
-          console.error('Unexpected response structure:', enrollments);
-        }
+  
+        setEnrollmentCount(enrollments.length);
+  
+        // Update the current_enrollments field in the parent component
+        const updatedTest = { ...test, current_enrollments: enrollments.length };
+        onEdit(updatedTest);
       } catch (error) {
         console.error("Error fetching enrollments:", error);
       }
     }
   
     fetchEnrollmentCount();
-  }, [test.id, onEdit]);  // Re-run effect when test.id changes
+  }, [test.id]);
+  
   
   function formatDateForDisplay(dateStr: string) {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    const year = date.getFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+    const day = date.getUTCDate().toString().padStart(2, "0");
+    const year = date.getUTCFullYear();
     return `${month}-${day}-${year}`;
   }
 
