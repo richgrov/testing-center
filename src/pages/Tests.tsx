@@ -53,20 +53,36 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
         ...formData,
         opens: ensureDateAtTime(formData.opens, 0, 0),
         closes: ensureDateAtTime(formData.closes, 23, 59),
+        current_enrollments: formData.current_enrollments || 0,
       };
-
-      let savedTest;
+  
+      let savedRecord;
       if (test?.id) {
-        savedTest = await pocketBase.collection("tests").update(test.id, testData);
+        savedRecord = await pocketBase.collection("tests").update(test.id, testData);
       } else {
-        savedTest = await pocketBase.collection("tests").create(testData);
+        savedRecord = await pocketBase.collection("tests").create(testData);
       }
-      onSave(savedTest); // it works but is angry
+  
+      const savedTest: Test = {
+        id: savedRecord.id,
+        name: savedRecord.name,
+        opens: savedRecord.opens,
+        closes: savedRecord.closes,
+        duration_mins: savedRecord.duration_mins,
+        course_code: savedRecord.course_code,
+        section: savedRecord.section,
+        rules: savedRecord.rules,
+        max_enrollments: savedRecord.max_enrollments,
+        current_enrollments: savedRecord.current_enrollments,
+      };
+  
+      onSave(savedTest); 
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
     }
   }
+  
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -171,13 +187,29 @@ export function TestsPage() {
     async function fetchTests() {
       try {
         const records = await pocketBase.collection("tests").getFullList();
-        setTests(records);
+  
+        // Map the records into Test objects
+        const formattedTests: Test[] = records.map(record => ({
+          id: record.id,
+          name: record.name,
+          opens: record.opens,
+          closes: record.closes,
+          duration_mins: record.duration_mins,
+          course_code: record.course_code,
+          section: record.section,
+          rules: record.rules,
+          max_enrollments: record.max_enrollments,
+          current_enrollments: record.current_enrollments,
+        }));
+  
+        setTests(formattedTests);
       } catch (error) {
         console.error("Error fetching tests:", error);
       }
     }
+  
     fetchTests();
-  }, []);
+  }, []);  
 
   async function addTest(newTest: Test) {
     setTests([...tests, newTest]);

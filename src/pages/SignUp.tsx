@@ -64,7 +64,7 @@ export function SignUpPage() {
   const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(
     new Set()
   );
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
   const [studentName, setStudentName] = useState("");
   const perPage = 100;
