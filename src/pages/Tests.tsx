@@ -31,7 +31,7 @@ function formatDateForInput(dateStr: string) {
 
 function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
   const [formData, setFormData] = useState<Test>(
-    test || { id: "", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "", max_enrollments: 0, current_enrollments: 0}
+    test || { id: "", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "", max_enrollments: 0, current_enrollments: 0 }
   );
   const [open, setOpen] = useState(false);
 
@@ -55,14 +55,14 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
         closes: ensureDateAtTime(formData.closes, 23, 59),
         current_enrollments: formData.current_enrollments || 0,
       };
-  
+
       let savedRecord;
       if (test?.id) {
         savedRecord = await pocketBase.collection("tests").update(test.id, testData);
       } else {
         savedRecord = await pocketBase.collection("tests").create(testData);
       }
-  
+
       const savedTest: Test = {
         id: savedRecord.id,
         name: savedRecord.name,
@@ -75,14 +75,14 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
         max_enrollments: savedRecord.max_enrollments,
         current_enrollments: savedRecord.current_enrollments,
       };
-  
-      onSave(savedTest); 
+
+      onSave(savedTest);
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
     }
   }
-  
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -98,17 +98,28 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
         <label>Name of Test</label>
         <Input name="name" value={formData.name} onChange={handleChange} placeholder="Test Name" />
 
-        <label>Course Code</label>
-        <Input name="course_code" value={formData.course_code} onChange={handleChange} placeholder="Course Code" />
+        <div className="flex gap-8">
+          <div>
+            <label>Course Code</label>
+            <Input name="course_code" value={formData.course_code} onChange={handleChange} placeholder="Course Code" />
+          </div>
+          <div>
+            <label>Section</label>
+            <Input name="section" value={formData.section || ""} onChange={handleChange} placeholder="Section (optional)" />
+          </div>
+        </div>
 
-        <label>Section</label>
-        <Input name="section" value={formData.section || ""} onChange={handleChange} placeholder="Section (optional)" />
+        <div className="flex justify-center gap-8">
+          <div>
+            <label>Test's opening date</label>
+            <Input name="opens" type="date" value={formatDateForInput(formData.opens)} onChange={handleChange} />
+          </div>
 
-        <label>Test's opening date</label>
-        <Input name="opens" type="date" value={formatDateForInput(formData.opens)} onChange={handleChange} />
-
-        <label>Test's closing date</label>
-        <Input name="closes" type="date" value={formatDateForInput(formData.closes)} onChange={handleChange} />
+          <div>
+            <label>Test's closing date</label>
+            <Input name="closes" type="date" value={formatDateForInput(formData.closes)} onChange={handleChange} />
+          </div>
+        </div>
 
         <label>Test Duration</label>
         <Input name="duration_mins" type="number" value={formData.duration_mins} onChange={handleChange} placeholder="Duration (mins)" />
@@ -133,22 +144,26 @@ function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) =>
       try {
         const enrollments = await pocketBase.collection("test_enrollments").getFullList({
           filter: `test = "${test.id}"`,
+          requestKey: Math.random().toString(),
         });
-  
-        setEnrollmentCount(enrollments.length);
-  
-        // Update the current_enrollments field in the parent component
-        const updatedTest = { ...test, current_enrollments: enrollments.length };
-        onEdit(updatedTest);
+
+        const enrollmentCount = enrollments.length;
+        setEnrollmentCount(enrollmentCount);
+
+        // Update PocketBase to store the enrollment count
+        await pocketBase.collection("tests").update(test.id, { current_enrollments: enrollmentCount });
+
+        // Update the UI state
+        onEdit({ ...test, current_enrollments: enrollmentCount });
       } catch (error) {
         console.error("Error fetching enrollments:", error);
       }
     }
-  
+
     fetchEnrollmentCount();
   }, [test.id]);
-  
-  
+
+
   function formatDateForDisplay(dateStr: string) {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -187,7 +202,7 @@ export function TestsPage() {
     async function fetchTests() {
       try {
         const records = await pocketBase.collection("tests").getFullList();
-  
+
         // Map the records into Test objects
         const formattedTests: Test[] = records.map(record => ({
           id: record.id,
@@ -201,15 +216,15 @@ export function TestsPage() {
           max_enrollments: record.max_enrollments,
           current_enrollments: record.current_enrollments,
         }));
-  
+
         setTests(formattedTests);
       } catch (error) {
         console.error("Error fetching tests:", error);
       }
     }
-  
+
     fetchTests();
-  }, []);  
+  }, []);
 
   async function addTest(newTest: Test) {
     setTests([...tests, newTest]);
