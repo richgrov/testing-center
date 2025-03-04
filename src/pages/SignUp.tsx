@@ -140,7 +140,7 @@ export function SignUpPage() {
 
   return (
     <>
-      <div className="flex gap-4 mt-6">
+      <div className="flex gap-4 mt-6 justify-center">
         {/* Search Field */}
         <input
           type="text"

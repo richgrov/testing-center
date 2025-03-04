@@ -204,6 +204,7 @@ function TestDialog({
               type="date"
               value={formatDateForInput(formData.opens)}
               onChange={handleChange}
+              className="w-[215px]"
               required
             />
           </div>
@@ -215,6 +216,7 @@ function TestDialog({
               type="date"
               value={formatDateForInput(formData.closes)}
               onChange={handleChange}
+              className="w-[215px]"
               required
             />
           </div>
