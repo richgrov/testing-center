@@ -92,19 +92,19 @@ function TestDialog({
         savedRecord = await pocketBase.collection("tests").create(testData);
       }
 
-      const savedTest: Test = {
-        id: savedRecord.id,
-        name: savedRecord.name,
-        opens: savedRecord.opens,
-        closes: savedRecord.closes,
-        duration_mins: savedRecord.duration_mins,
-        course_code: savedRecord.course_code,
-        section: savedRecord.section,
-        rules: savedRecord.rules,
-        max_enrollments: savedRecord.max_enrollments,
-      };
+      // const savedTest: Test = {
+      //   id: savedRecord.id,
+      //   name: savedRecord.name,
+      //   opens: savedRecord.opens,
+      //   closes: savedRecord.closes,
+      //   duration_mins: savedRecord.duration_mins,
+      //   course_code: savedRecord.course_code,
+      //   section: savedRecord.section,
+      //   rules: savedRecord.rules,
+      //   max_enrollments: savedRecord.max_enrollments,
+      // };
 
-      onSave(savedTest);
+      onSave(savedRecord as unknown as Test);
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
@@ -215,35 +215,24 @@ function TestCard({
   const [enrollmentCount, setEnrollmentCount] = useState<number>(0);
   const [currentTest] = useState<Test>(test);
 
-  useEffect(() => {
-    async function fetchEnrollmentCount() {
-      try {
-        const enrollments = await pocketBase
-          .collection("test_enrollments")
-          .getFullList({
-            filter: `test = "${currentTest.id}"`,
-            requestKey: null, // Prevent auto-cancel
-          });
-        setEnrollmentCount(enrollments.length);
-      } catch (error) {
-        console.error("Error fetching enrollments:", error);
-        setEnrollmentCount(0);
-      }
+   useEffect(() => {
+    if (!currentTest.id) {
+      return;
     }
 
-    if (currentTest.id) {
-      fetchEnrollmentCount();
+    try {
+      pocketBase
+        .collection("test_enrollments")
+        .getFullList({
+          filter: `test = "${currentTest.id}"`,
+          requestKey: null, // Prevent auto-cancel
+        })
+        .then((enrollments) => setEnrollmentCount(enrollments.length));
+    } catch (error) {
+      console.error("Error fetching enrollments:", error);
+      setEnrollmentCount(0);
     }
   }, [currentTest.id]);
-
-  function formatDateForDisplay(dateStr: string) {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
-    const day = date.getUTCDate().toString().padStart(2, "0");
-    const year = date.getUTCFullYear();
-    return `${month}-${day}-${year}`;
-  }
 
   return (
     <Card>
@@ -257,8 +246,8 @@ function TestCard({
         <TestDialog test={test} onSave={onEdit} />
       </CardHeader>
       <CardContent>
-        <p>Opens: {formatDateForDisplay(test.opens)}</p>
-        <p>Closes: {formatDateForDisplay(test.closes)}</p>
+        <p>Opens: {new Date(test.opens).toLocaleDateString()}</p>
+        <p>Closes: {new Date(test.closes).toLocaleDateString()}</p>
         <p>Duration: {test.duration_mins} mins</p>
         <p>Rules: {test.rules}</p>
         <p>

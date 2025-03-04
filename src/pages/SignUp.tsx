@@ -86,24 +86,8 @@ export function SignUpPage() {
         filter: filterQuery,
       })
       .then((data) => {
-        const enrollments: Enrollment[] = data.items.map((item) => ({
-          canvas_student_id: item.canvas_student_id,
-          canvas_student_name: item.canvas_student_name,
-          duration_mins: item.duration_mins,
-          link_sent: item.link_sent,
-          start_test_at: item.start_test_at,
-          unlock_after: item.unlock_after,
-          expand: {
-            test: {
-              name: item.expand?.test?.name || "",
-              course_code: item.expand?.test?.course_code || "",
-              section: item.expand?.test?.section || "",
-              rules: item.expand?.test?.rules || "No rules provided",
-            },
-          },
-        }));
-        setEnrollments(enrollments);
-        setFilteredEnrollments(enrollments);
+        setEnrollments(data.items as unknown as Enrollment[]);
+        setFilteredEnrollments(data.items as unknown as Enrollment[]);
       })
       .catch((error) => console.error("Error fetching enrollments:", error));
   }, [date, studentName, page]);
@@ -174,7 +158,7 @@ export function SignUpPage() {
           <TableRow>
             <TableHead>
               {selectedEnrollments.size > 0
-                ? `${selectedEnrollments.size} / 100`
+                ? `${perPage} / 100`
                 : " "}
             </TableHead>
             <TableHead>Name</TableHead>
@@ -203,7 +187,7 @@ export function SignUpPage() {
               {e.expand.test.course_code + " " + e.expand.test.section}
             </TableCell>
             <TableCell>{e.expand.test.name}</TableCell>
-            <TableCell>{e.expand.test.rules}</TableCell>
+            <TableCell>{e.expand.test.rules || "No Rules Provided"}</TableCell>
           </TableRow>
         ))}
       </Table>
