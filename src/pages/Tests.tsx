@@ -77,10 +77,31 @@ function TestDialog({
 
   const [isLoading, setIsLoading] = useState(false);
   const [, setErrorMessage] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   async function handleSubmit() {
     setIsLoading(true);
     setErrorMessage("");
+    setFormErrors({}); // Clear previous errors
+
+    // Validate required fields
+    const errors: Record<string, string> = {};
+    if (!formData.name) errors.name = "Test name is required.";
+    if (!formData.opens) errors.opens = "Opening date is required.";
+    if (!formData.closes) errors.closes = "Closing date is required.";
+    if (!formData.course_code) errors.course_code = "Course code is required.";
+    if (!formData.duration_mins || formData.duration_mins <= 0) {
+      errors.duration_mins = "Duration must be greater than 0.";
+    }
+    if (!formData.max_enrollments || formData.max_enrollments <= 0) {
+      errors.max_enrollments = "Max enrollments must be greater than 0.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const testData = {
@@ -89,23 +110,41 @@ function TestDialog({
         closes: ensureDateAtTime(formData.closes, 23, 59),
       };
 
-      let savedTest;
+      let savedTestResponse;
       if (test?.id) {
-        savedTest = await pocketBase.collection("tests").update(test.id, testData);
+        savedTestResponse = await pocketBase
+          .collection("tests")
+          .update(test.id, testData);
       } else {
-        savedTest = await pocketBase.collection("tests").create(testData);
+        savedTestResponse = await pocketBase
+          .collection("tests")
+          .create(testData);
       }
+
+      // Explicitly cast to match the `Test` interface
+      const savedTest: Test = {
+        id: savedTestResponse.id,
+        name: savedTestResponse.name,
+        opens: savedTestResponse.opens,
+        closes: savedTestResponse.closes,
+        duration_mins: savedTestResponse.duration_mins,
+        course_code: savedTestResponse.course_code,
+        section: savedTestResponse.section,
+        rules: savedTestResponse.rules,
+        max_enrollments: savedTestResponse.max_enrollments,
+      };
 
       onSave(savedTest);
       setOpen(false);
     } catch (error: any) {
-      setErrorMessage(error.message || "An error occurred while saving the test.");
+      setErrorMessage(
+        error.message || "An error occurred while saving the test."
+      );
       console.error("Error saving test:", error);
     } finally {
       setIsLoading(false);
     }
   }
-
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -124,7 +163,11 @@ function TestDialog({
           value={formData.name}
           onChange={handleChange}
           placeholder="Test Name"
+          required
         />
+        {formErrors.name && (
+          <p className="text-red-500 text-sm">{formErrors.name}</p>
+        )}
 
         <div className="flex gap-8">
           <div>
@@ -134,8 +177,10 @@ function TestDialog({
               value={formData.course_code}
               onChange={handleChange}
               placeholder="Course Code"
+              required
             />
           </div>
+
           <div>
             <label>Section</label>
             <Input
@@ -147,6 +192,10 @@ function TestDialog({
           </div>
         </div>
 
+        {formErrors.course_code && (
+          <p className="text-red-500 text-sm">{formErrors.course_code}</p>
+        )}
+
         <div className="flex justify-center gap-8">
           <div>
             <label>Test's opening date</label>
@@ -155,6 +204,7 @@ function TestDialog({
               type="date"
               value={formatDateForInput(formData.opens)}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -165,8 +215,18 @@ function TestDialog({
               type="date"
               value={formatDateForInput(formData.closes)}
               onChange={handleChange}
+              required
             />
           </div>
+        </div>
+
+        <div className="flex justify-center gap-8">
+          {formErrors.opens && (
+            <p className="text-red-500 text-sm">{formErrors.opens}</p>
+          )}
+          {formErrors.closes && (
+            <p className="text-red-500 text-sm">{formErrors.closes}</p>
+          )}
         </div>
 
         <label>Test Duration</label>
@@ -176,7 +236,11 @@ function TestDialog({
           value={formData.duration_mins}
           onChange={handleChange}
           placeholder="Duration (mins)"
+          required
         />
+        {formErrors.duration_mins && (
+          <p className="text-red-500 text-sm">{formErrors.duration_mins}</p>
+        )}
 
         <label>Rules</label>
         <Input
@@ -193,10 +257,17 @@ function TestDialog({
           value={formData.max_enrollments}
           onChange={handleChange}
           placeholder="Maximum number of students"
+          required
         />
+        {formErrors.max_enrollments && (
+          <p className="text-red-500 text-sm">{formErrors.max_enrollments}</p>
+        )}
 
         <Button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading && <div className="animate-spin h-5 w-5 border-4 border-blue-500 border-t-transparent rounded-full"></div>}
+          {isLoading && (
+            <div className="animate-spin h-5 w-5 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+          )}
+          Save
         </Button>
       </DialogContent>
     </Dialog>
