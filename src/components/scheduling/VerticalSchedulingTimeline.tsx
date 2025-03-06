@@ -38,7 +38,6 @@ export default function HorizontalSchedulingTimeline(
     cellDurationMins,
     heatmapColorFunc,
     update,
-    mySchedulings,
   } = {
     timelineStartMins: 7 * 60,
     timelineEndMins: 20 * 60,
@@ -170,7 +169,7 @@ export default function HorizontalSchedulingTimeline(
       {/* Container for heatmap and time labels */}
       <div className="flex flex-col items-center w-full">
         {/* Heatmap Grid */}
-        <div className="grid grid-flow-col auto-cols-[15px]">
+        <div className="grid grid-flow-col lg:auto-cols-[15px] md:auto-cols-[10px] sm:auto-cols-[8px]">
           {timeSlots.map((time, i) => {
             const isAllowed = isTimeAllowed(time);
             const overlaps = getOverlapCount(time);
@@ -197,7 +196,7 @@ export default function HorizontalSchedulingTimeline(
                   backgroundColor,
                   zIndex: 1,
                   width: "15px",
-                  height: "50px",
+                  height: "30px",
                 }}
                 onMouseEnter={() => {
                   setHoverTime(time);
@@ -225,35 +224,6 @@ export default function HorizontalSchedulingTimeline(
             );
           })}
         </div>
-
-        {/* Scheduling windows */}
-        {mySchedulings.map((window) => (
-          <div
-            key={JSON.stringify(window)}
-            className="ml-16"
-            style={{
-              backgroundColor: "#FFA50011",
-              zIndex: 5,
-              border: window.confirmed
-                ? "4px solid orange"
-                : "3px dashed orange",
-              top: "-2px",
-              right: "-2px",
-              left: "-2px",
-              bottom: "-2px",
-              gridRow: `${
-                Math.floor(
-                  (window.start - timelineStartMins) / cellDurationMins
-                ) + 1
-              } / ${
-                Math.ceil((window.end - timelineStartMins) / cellDurationMins) +
-                1
-              }`,
-              gridColumn: "1",
-              pointerEvents: "none",
-            }}
-          ></div>
-        ))}
       </div>
     </div>
   );
