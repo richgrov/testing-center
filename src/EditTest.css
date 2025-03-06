@@ -1,0 +1,33 @@
+.horizontal-timeline {
+  display: flex; /* Display items horizontally */
+  flex-direction: row; /* Align items in a row */
+  overflow-x: auto; /* Allow horizontal scrolling */
+  width: 100%;
+  gap: 10px; /* Space between time slots */
+}
+
+.time-slot {
+  flex-shrink: 0; /* Prevent shrinking */
+  width: 150px; /* Adjust width to suit your design */
+  text-align: center;
+  border: 1px solid #ccc; /* Border around each time slot container */
+  padding: 10px;
+  background-color: #f9f9f9; /* Light background color for the time slot container */
+}
+
+.time-slot h2 {
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+}
+
+.available-times {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.time-slot-block {
+  border: 1px solid #ddd;
+  padding: 5px;
+  background-color: #e0e0e0; /* Lighter background for individual time slots */
+}

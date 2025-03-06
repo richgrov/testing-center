@@ -9,6 +9,8 @@ export interface Scheduling extends TimeWindow {
 }
 
 export interface Availability extends TimeWindow {
+  startAtDate: string | number | Date;
+  minutes: any;
   seats: number;
 }
 

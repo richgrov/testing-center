@@ -384,7 +384,7 @@ export default function EditTestSlotPage() {
             </div>
           ) : null}
         </div>
-        <div className="flex flex-row nowrap w-full overflow-x-auto">
+        <div className="flex flex-col nowrap w-full overflow-x-auto">
           {timeDetails.map((day) => {
             const date = new Date(day[0]);
             return (

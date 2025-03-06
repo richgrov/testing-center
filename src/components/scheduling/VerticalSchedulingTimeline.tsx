@@ -4,11 +4,11 @@ import { SchedulingTimelineProps } from "./types"
 
 export function defaultHeatmapColorFunc(value: number, min: number, max: number): string {
   const intensity = (value - min) / (max - min);
-  
+
   // Start with hue 52, lightness 88%
   // Move to hue 52, lightness 50%
   // End with hue 33, lightness 50%
-  
+
   if (intensity <= 0.5) {
     // Interpolate lightness from 88% to 50% while keeping hue at 52
     const lightness = 88 - (intensity * 2 * (88 - 50));
@@ -21,7 +21,7 @@ export function defaultHeatmapColorFunc(value: number, min: number, max: number)
   }
 }
 
-export default function VerticalSchedulingTimeline(props: SchedulingTimelineProps) {
+export default function HorizontalSchedulingTimeline(props: SchedulingTimelineProps) {
   const {
     title,
     allowedWindows,
@@ -52,7 +52,7 @@ export default function VerticalSchedulingTimeline(props: SchedulingTimelineProp
 
   // Check if a time is within allowed windows
   const isTimeAllowed = (time: number) => {
-    return allowedWindows.some(window => 
+    return allowedWindows.some(window =>
       time >= window.start && time + cellDurationMins <= window.end
     );
   };
@@ -60,17 +60,17 @@ export default function VerticalSchedulingTimeline(props: SchedulingTimelineProp
   // Count overlaps for a specific time
   const getOverlapCount = (time: number) => {
     let sum = 0;
-    existingSchedules.filter(schedule => 
+    existingSchedules.filter(schedule =>
       time < schedule.end && time + cellDurationMins > schedule.start
-    ).forEach(schedule => {sum += schedule.weight});
+    ).forEach(schedule => { sum += schedule.weight });
     return sum as number;
   };
 
   const getMaxOverlap = (time: number) => {
     let sum = 0;
-    allowedWindows.filter(window => 
+    allowedWindows.filter(window =>
       time >= window.start && time + cellDurationMins <= window.end
-    ).forEach(window => {sum += window.seats});
+    ).forEach(window => { sum += window.seats });
     return sum;
   }
 
@@ -136,76 +136,62 @@ export default function VerticalSchedulingTimeline(props: SchedulingTimelineProp
   };
 
   return (
-    <div className="w-64 bg-white rounded-lg shadow-lg p-4">
+    <div className="w-full bg-white rounded-lg shadow-lg p-4">
       <div className="text-lg font-semibold mb-4">
         {title}
       </div>
-      
+
       <div className={`mb-4 p-2 ${error ? "bg-red-100" : ""} text-red-700 text-sm rounded h-16`}>
         {error}
       </div>
-      
-      <div className="grid">
-        {timeSlots.map((time, i) => {
-          const isAllowed = isTimeAllowed(time);
-          const overlaps = getOverlapCount(time);
-          const isInPreview = preview && time >= preview.start && time < preview.end;
-          const wouldExceed = isAllowed && wouldExceedMaxOverlap(time);
-          
-          const backgroundColor = (() => {
-            if (!isAllowed) return '#d1d5db'; // gray
-            if (wouldExceed) return '#fecaca'; // light red
-            if (isInPreview) return '#60a5fa'; // blue
-            return heatmapColorFunc(overlaps, 0, 30);
-          })();
-          
-          return (
-            <div
-              key={time}
-              className={`
-                h-8 relative flex items-center ml-16
-                ${isAllowed && !wouldExceed ? 'cursor-pointer' : 'cursor-not-allowed'}
-              `}
-              style={{ backgroundColor, gridRow: i + 1, gridColumn: 1 }}
-              onMouseEnter={() => {
-                setHoverTime(time);
-                if (wouldExceed) {
-                  setError(`Scheduling here would exceed maximum overlap`);
-                } else {
+
+      {/* Container for heatmap and time labels */}
+      <div className="flex flex-col items-center">
+        {/* Heatmap Grid */}
+        <div className="grid grid-flow-col auto-cols-[15px] ">
+          {timeSlots.map((time, i) => {
+            const isAllowed = isTimeAllowed(time);
+            const overlaps = getOverlapCount(time);
+            const isInPreview = preview && time >= preview.start && time < preview.end;
+            const wouldExceed = isAllowed && wouldExceedMaxOverlap(time);
+
+            const backgroundColor = (() => {
+              if (!isAllowed) return '#d1d5db'; // gray
+              if (wouldExceed) return '#fecaca'; // light red
+              if (isInPreview) return '#60a5fa'; // blue
+              return heatmapColorFunc(overlaps, 0, 30);
+            })();
+
+            return (
+              <div
+                key={time}
+                className={`h-6 relative flex items-center ${isAllowed && !wouldExceed ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                style={{ backgroundColor, zIndex: 1, width: '8px' }}
+                onMouseEnter={() => {
+                  setHoverTime(time);
+                  if (wouldExceed) {
+                    setError(`Scheduling here would exceed maximum overlap`);
+                  } else {
+                    setError(null);
+                  }
+                }}
+                onMouseLeave={() => {
+                  setHoverTime(null);
                   setError(null);
-                }
-              }}
-              onMouseLeave={() => {
-                setHoverTime(null);
-                setError(null);
-              }}
-              onClick={() => handleScheduleClick(time)}
-            >
-              {time % 60 === 0 && (
-                <span style={{ zIndex: 10 }} className="absolute -left-16 text-sm">
-                  {formatTime(time)}
-                </span>
-              )}
-            </div>
-          );
-        })}
-        {mySchedulings.map(window => (
-          <div
-            key={JSON.stringify(window)}
-            className="ml-16"
-            style={{
-              backgroundColor: "#FFA50011",
-              zIndex: 5,
-              border: window.confirmed ? "4px solid orange" : "3px dashed orange",
-              top: "-2px", right: "-2px", left: "-2px", bottom: "-2px",
-              gridRow: `${Math.floor((window.start - timelineStartMins) / cellDurationMins) + 1} / ${Math.ceil((window.end - timelineStartMins) / cellDurationMins) + 1}`,
-              gridColumn: "1",
-              pointerEvents: "none",
-            }}
-            >
-          </div>
-        ))}
+                }}
+                onClick={() => handleScheduleClick(time)}
+              >
+                {time % 60 === 0 && (
+                  <span style={{ zIndex: 10 }} className="absolute -top-8 text-xs">
+                    {formatTime(time)}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
+
 };
