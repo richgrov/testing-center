@@ -193,7 +193,12 @@ export default function HorizontalSchedulingTimeline(
                     ? "cursor-pointer"
                     : "cursor-not-allowed"
                 }`}
-                style={{ backgroundColor, zIndex: 1, width: "15px", height: "50px" }}
+                style={{
+                  backgroundColor,
+                  zIndex: 1,
+                  width: "15px",
+                  height: "50px",
+                }}
                 onMouseEnter={() => {
                   setHoverTime(time);
                   if (wouldExceed) {
@@ -220,6 +225,35 @@ export default function HorizontalSchedulingTimeline(
             );
           })}
         </div>
+
+        {/* Scheduling windows */}
+        {mySchedulings.map((window) => (
+          <div
+            key={JSON.stringify(window)}
+            className="ml-16"
+            style={{
+              backgroundColor: "#FFA50011",
+              zIndex: 5,
+              border: window.confirmed
+                ? "4px solid orange"
+                : "3px dashed orange",
+              top: "-2px",
+              right: "-2px",
+              left: "-2px",
+              bottom: "-2px",
+              gridRow: `${
+                Math.floor(
+                  (window.start - timelineStartMins) / cellDurationMins
+                ) + 1
+              } / ${
+                Math.ceil((window.end - timelineStartMins) / cellDurationMins) +
+                1
+              }`,
+              gridColumn: "1",
+              pointerEvents: "none",
+            }}
+          ></div>
+        ))}
       </div>
     </div>
   );
