@@ -169,7 +169,7 @@ export default function HorizontalSchedulingTimeline(
       {/* Container for heatmap and time labels */}
       <div className="flex flex-col items-center w-full">
         {/* Heatmap Grid */}
-        <div className="grid grid-flow-col lg:auto-cols-[15px] md:auto-cols-[10px] sm:auto-cols-[8px]">
+        <div className="grid grid-flow-col lg:auto-cols-[10px] md:auto-cols-[10px] sm:auto-cols-[8px]">
           {timeSlots.map((time, i) => {
             const isAllowed = isTimeAllowed(time);
             const overlaps = getOverlapCount(time);
@@ -196,7 +196,7 @@ export default function HorizontalSchedulingTimeline(
                   backgroundColor,
                   zIndex: 1,
                   width: "15px",
-                  height: "30px",
+                  height: "60px",
                 }}
                 onMouseEnter={() => {
                   setHoverTime(time);
