@@ -155,13 +155,13 @@ export default function HorizontalSchedulingTimeline(
   };
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-lg p-4">
-      <div className="text-lg font-semibold mb-4">{title}</div>
+    <div className="w-full bg-white rounded-lg shadow-lg p-4 sm:p-2">
+      <div className="text-lg sm:text-base font-semibold mb-4">{title}</div>
 
       <div
         className={`mb-4 p-2 ${
           error ? "bg-red-100" : ""
-        } text-red-700 text-sm rounded h-16`}
+        } text-red-700 text-sm sm:text-xs rounded h-16 sm:h-12`}
       >
         {error}
       </div>
@@ -169,7 +169,7 @@ export default function HorizontalSchedulingTimeline(
       {/* Container for heatmap and time labels */}
       <div className="flex flex-col items-center w-full">
         {/* Heatmap Grid */}
-        <div className="grid grid-flow-col lg:auto-cols-[10px] md:auto-cols-[10px] sm:auto-cols-[8px]">
+        <div className="flex flex-wrap justify-start w-full" style={{ gap: 0 }}>
           {timeSlots.map((time, i) => {
             const isAllowed = isTimeAllowed(time);
             const overlaps = getOverlapCount(time);
@@ -187,7 +187,7 @@ export default function HorizontalSchedulingTimeline(
             return (
               <div
                 key={time}
-                className={`h-6 relative flex items-center ${
+                className={`h-6 sm:h-4 relative flex items-center ${
                   isAllowed && !wouldExceed
                     ? "cursor-pointer"
                     : "cursor-not-allowed"
@@ -195,7 +195,7 @@ export default function HorizontalSchedulingTimeline(
                 style={{
                   backgroundColor,
                   zIndex: 1,
-                  width: "15px",
+                  width: "calc(100% / " + timeSlots.length + ")", // Ensure that cells take up proportional space
                   height: "60px",
                 }}
                 onMouseEnter={() => {
@@ -215,7 +215,7 @@ export default function HorizontalSchedulingTimeline(
                 {time % 60 === 0 && (
                   <span
                     style={{ zIndex: 10 }}
-                    className="absolute -top-8 text-xs"
+                    className="absolute -top-10 text-xs sm:text-xs md:text-sm"
                   >
                     {formatTime(time)}
                   </span>
