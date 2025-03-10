@@ -158,7 +158,7 @@ export function SignUpPage() {
           <TableRow>
             <TableHead>
               {selectedEnrollments.size > 0
-                ? `${perPage} / 100`
+                ? ` ${selectedEnrollments.size} / ${perPage}`
                 : " "}
             </TableHead>
             <TableHead>Name</TableHead>

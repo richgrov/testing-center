@@ -91,20 +91,20 @@ function TestDialog({
       } else {
         savedRecord = await pocketBase.collection("tests").create(testData);
       }
+      
+      const savedTest: Test = {
+        id: savedRecord.id,
+        name: savedRecord.name,
+        opens: savedRecord.opens,
+        closes: savedRecord.closes,
+        duration_mins: savedRecord.duration_mins,
+        course_code: savedRecord.course_code,
+        section: savedRecord.section,
+        rules: savedRecord.rules,
+        max_enrollments: savedRecord.max_enrollments,
+      };
 
-      // const savedTest: Test = {
-      //   id: savedRecord.id,
-      //   name: savedRecord.name,
-      //   opens: savedRecord.opens,
-      //   closes: savedRecord.closes,
-      //   duration_mins: savedRecord.duration_mins,
-      //   course_code: savedRecord.course_code,
-      //   section: savedRecord.section,
-      //   rules: savedRecord.rules,
-      //   max_enrollments: savedRecord.max_enrollments,
-      // };
-
-      onSave(savedRecord as unknown as Test);
+      onSave(savedTest);
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
