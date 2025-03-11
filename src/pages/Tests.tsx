@@ -75,41 +75,27 @@ function TestDialog({
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit<T extends Test>() {
     try {
-      const testData = {
+      const testData: T = {
         ...formData,
         opens: ensureDateAtTime(formData.opens, 0, 0),
         closes: ensureDateAtTime(formData.closes, 23, 59),
-      };
-
-      let savedRecord;
+      } as T;
+  
+      let savedRecord: T;
       if (test?.id) {
-        savedRecord = await pocketBase
-          .collection("tests")
-          .update(test.id, testData);
+        savedRecord = (await pocketBase.collection("tests").update(test.id, testData)) as T;
       } else {
-        savedRecord = await pocketBase.collection("tests").create(testData);
+        savedRecord = (await pocketBase.collection("tests").create(testData)) as T;
       }
-      
-      const savedTest: Test = {
-        id: savedRecord.id,
-        name: savedRecord.name,
-        opens: savedRecord.opens,
-        closes: savedRecord.closes,
-        duration_mins: savedRecord.duration_mins,
-        course_code: savedRecord.course_code,
-        section: savedRecord.section,
-        rules: savedRecord.rules,
-        max_enrollments: savedRecord.max_enrollments,
-      };
-
-      onSave(savedTest);
+  
+      onSave(savedRecord);
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
     }
-  }
+  }  
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

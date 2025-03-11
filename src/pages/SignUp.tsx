@@ -71,26 +71,26 @@ export function SignUpPage() {
 
   useEffect(() => {
     if (!date) return;
-
+  
     const selectedDateStr = format(date, "yyyy-MM-dd");
     let filterQuery = `start_test_at >= \"${selectedDateStr} 00:00:00\" && start_test_at <= \"${selectedDateStr} 23:59:59\"`;
-
+  
     if (studentName.trim() !== "") {
       filterQuery += ` && canvas_student_name ~ \"${studentName.trim()}\"`;
     }
-
+  
     enrollmentsCollection
-      .getList(page + 1, perPage, {
+      .getList<Enrollment>(page + 1, perPage, {
         expand: "test",
         sort: "-start_test_at",
         filter: filterQuery,
       })
       .then((data) => {
-        setEnrollments(data.items as unknown as Enrollment[]);
-        setFilteredEnrollments(data.items as unknown as Enrollment[]);
+        setEnrollments(data.items);
+        setFilteredEnrollments(data.items);
       })
       .catch((error) => console.error("Error fetching enrollments:", error));
-  }, [date, studentName, page]);
+  }, [date, studentName, page]);  
 
   const paginatedEnrollments = filteredEnrollments.slice(
     page * perPage,
