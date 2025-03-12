@@ -75,27 +75,31 @@ function TestDialog({
     }
   }
 
-  async function handleSubmit<T extends Test>() {
+  async function handleSubmit() {
     try {
-      const testData: T = {
+      const testData = {
         ...formData,
         opens: ensureDateAtTime(formData.opens, 0, 0),
         closes: ensureDateAtTime(formData.closes, 23, 59),
-      } as T;
-  
-      let savedRecord: T;
+      } as Test;
+
+      let savedRecord;
       if (test?.id) {
-        savedRecord = (await pocketBase.collection("tests").update(test.id, testData)) as T;
+        savedRecord = await pocketBase
+          .collection<Test>("tests")
+          .update(test.id, testData);
       } else {
-        savedRecord = (await pocketBase.collection("tests").create(testData)) as T;
+        savedRecord = await pocketBase
+          .collection<Test>("tests")
+          .create(testData);
       }
-  
+
       onSave(savedRecord);
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
     }
-  }  
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -201,7 +205,7 @@ function TestCard({
   const [enrollmentCount, setEnrollmentCount] = useState<number>(0);
   const [currentTest] = useState<Test>(test);
 
-   useEffect(() => {
+  useEffect(() => {
     if (!currentTest.id) {
       return;
     }
