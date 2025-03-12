@@ -112,7 +112,7 @@ export default function HorizontalSchedulingTimeline(
     const date = new Date();
     date.setHours(Math.floor(minutes / 60));
     date.setMinutes(minutes % 60);
-    return format(date, "h:mm a");
+    return format(date, "ha").replace(/AM/i, "a").replace(/PM/i, "p");
   };
 
   // Preview scheduling
@@ -214,8 +214,8 @@ export default function HorizontalSchedulingTimeline(
               >
                 {time % 60 === 0 && (
                   <span
-                    style={{ zIndex: 10 }}
-                    className="absolute -top-10 text-xs sm:text-xs md:text-sm"
+                    style={{ zIndex: 10}}
+                    className="absolute -top-5 text-xs sm:text-xs md:text-sm text-center"
                   >
                     {formatTime(time)}
                   </span>
