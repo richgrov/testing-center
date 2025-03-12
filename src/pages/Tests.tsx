@@ -1,9 +1,22 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { pocketBase } from "@/pocketbase"; // Ensure this is correctly imported
+import { pocketBase } from "@/pocketbase";
 
 interface Test {
   id: string;
@@ -14,18 +27,39 @@ interface Test {
   course_code: string;
   section?: string;
   rules: string;
+  max_enrollments: number;
 }
 
-// Ensures dates are stored correctly in UTC
 function ensureDateAtTime(dateStr: string, hour: number, minute: number) {
   const date = new Date(dateStr);
-  date.setUTCHours(hour, minute, 0, 0); // Set to the specific hour and minute in UTC
+  date.setUTCHours(hour, minute, 0, 0);
   return date.toISOString();
 }
 
-function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => void }) {
+function formatDateForInput(dateStr: string) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toISOString().slice(0, 10);
+}
+
+function TestDialog({
+  test,
+  onSave,
+}: {
+  test?: Test;
+  onSave: (newTest: Test) => void;
+}) {
   const [formData, setFormData] = useState<Test>(
-    test || { id:"", name: "", opens: "", closes: "", duration_mins: 0, course_code: "", section: "", rules: "" }
+    test || {
+      id: "",
+      name: "",
+      opens: "",
+      closes: "",
+      duration_mins: 0,
+      course_code: "",
+      section: "",
+      rules: "",
+      max_enrollments: 0,
+    }
   );
   const [open, setOpen] = useState(false);
 
@@ -41,26 +75,26 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
     }
   }
 
-  function formatDateForInput(dateStr: string) {
-    if (!dateStr) return "";
-    return new Date(dateStr).toISOString().slice(0, 10); // Ensures proper display in input field
-  }
-
   async function handleSubmit() {
     try {
       const testData = {
         ...formData,
         opens: ensureDateAtTime(formData.opens, 0, 0),
         closes: ensureDateAtTime(formData.closes, 23, 59),
-      };
+      } as Test;
 
-      let savedTest;
+      let savedRecord;
       if (test?.id) {
-        savedTest = await pocketBase.collection("tests").update(test.id, testData);
+        savedRecord = await pocketBase
+          .collection<Test>("tests")
+          .update(test.id, testData);
       } else {
-        savedTest = await pocketBase.collection("tests").create(testData);
+        savedRecord = await pocketBase
+          .collection<Test>("tests")
+          .create(testData);
       }
-      onSave(savedTest);// it works but is angry 
+
+      onSave(savedRecord);
       setOpen(false);
     } catch (error) {
       console.error("Error saving test:", error);
@@ -79,25 +113,81 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
         </DialogHeader>
 
         <label>Name of Test</label>
-        <Input name="name" value={formData.name} onChange={handleChange} placeholder="Test Name" />
+        <Input
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          placeholder="Test Name"
+        />
 
-        <label>Course Code</label>
-        <Input name="course_code" value={formData.course_code} onChange={handleChange} placeholder="Course Code" />
+        <div className="flex gap-8">
+          <div>
+            <label>Course Code</label>
+            <Input
+              name="course_code"
+              value={formData.course_code}
+              onChange={handleChange}
+              placeholder="Course Code"
+            />
+          </div>
+          <div>
+            <label>Section</label>
+            <Input
+              name="section"
+              value={formData.section || ""}
+              onChange={handleChange}
+              placeholder="Section (optional)"
+            />
+          </div>
+        </div>
 
-        <label>Section</label>
-        <Input name="section" value={formData.section || ""} onChange={handleChange} placeholder="Section (optional)" />
+        <div className="flex justify-center gap-8">
+          <div>
+            <label>Test's opening date</label>
+            <Input
+              name="opens"
+              type="date"
+              value={formatDateForInput(formData.opens)}
+              onChange={handleChange}
+            />
+          </div>
 
-        <label>Test's opening date</label>
-        <Input name="opens" type="date" value={formatDateForInput(formData.opens)} onChange={handleChange} />
-
-        <label>Test's closing date</label>
-        <Input name="closes" type="date" value={formatDateForInput(formData.closes)} onChange={handleChange} />
+          <div>
+            <label>Test's closing date</label>
+            <Input
+              name="closes"
+              type="date"
+              value={formatDateForInput(formData.closes)}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
 
         <label>Test Duration</label>
-        <Input name="duration_mins" type="number" value={formData.duration_mins} onChange={handleChange} placeholder="Duration (mins)" />
+        <Input
+          name="duration_mins"
+          type="number"
+          value={formData.duration_mins}
+          onChange={handleChange}
+          placeholder="Duration (mins)"
+        />
 
         <label>Rules</label>
-        <Input name="rules" value={formData.rules || ""} onChange={handleChange} placeholder="Rules" />
+        <Input
+          name="rules"
+          value={formData.rules || ""}
+          onChange={handleChange}
+          placeholder="Rules"
+        />
+
+        <label>Max Enrollments</label>
+        <Input
+          name="max_enrollments"
+          type="number"
+          value={formData.max_enrollments}
+          onChange={handleChange}
+          placeholder="Maximum number of students"
+        />
 
         <Button onClick={handleSubmit}>Save</Button>
       </DialogContent>
@@ -105,30 +195,54 @@ function TestDialog({ test, onSave }: { test?: Test; onSave: (newTest: Test) => 
   );
 }
 
-function TestCard({ test, onEdit }: { test: Test; onEdit: (updatedTest: Test) => void }) {
-  function formatDateForDisplay(dateStr: string) {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${month}-${day}-${year}`;
-  }
+function TestCard({
+  test,
+  onEdit,
+}: {
+  test: Test;
+  onEdit: (updatedTest: Test) => void;
+}) {
+  const [enrollmentCount, setEnrollmentCount] = useState<number>(0);
+  const [currentTest] = useState<Test>(test);
+
+  useEffect(() => {
+    if (!currentTest.id) {
+      return;
+    }
+
+    try {
+      pocketBase
+        .collection("test_enrollments")
+        .getFullList({
+          filter: `test = "${currentTest.id}"`,
+          requestKey: null, // Prevent auto-cancel
+        })
+        .then((enrollments) => setEnrollmentCount(enrollments.length));
+    } catch (error) {
+      console.error("Error fetching enrollments:", error);
+      setEnrollmentCount(0);
+    }
+  }, [currentTest.id]);
 
   return (
     <Card>
       <CardHeader className="flex justify-between items-center">
         <div>
           <CardTitle>{test.name}</CardTitle>
-          <CardDescription>{test.course_code} {test.section}</CardDescription>
+          <CardDescription>
+            {test.course_code} {test.section}
+          </CardDescription>
         </div>
         <TestDialog test={test} onSave={onEdit} />
       </CardHeader>
       <CardContent>
-        <p>Opens: {formatDateForDisplay(test.opens)}</p> 
-        <p>Closes: {formatDateForDisplay(test.closes)}</p>
+        <p>Opens: {new Date(test.opens).toLocaleDateString()}</p>
+        <p>Closes: {new Date(test.closes).toLocaleDateString()}</p>
         <p>Duration: {test.duration_mins} mins</p>
         <p>Rules: {test.rules}</p>
+        <p>
+          {enrollmentCount} / {test.max_enrollments} students signed up
+        </p>
       </CardContent>
     </Card>
   );
@@ -140,12 +254,30 @@ export function TestsPage() {
   useEffect(() => {
     async function fetchTests() {
       try {
-        const records = await pocketBase.collection("tests").getFullList();
-        setTests(records);
+        const records = await pocketBase
+          .collection("tests")
+          .getFullList({ requestKey: null });
+
+        // Map the records into Test objects
+        const formattedTests: Test[] = records.map((record) => ({
+          id: record.id,
+          name: record.name,
+          opens: record.opens,
+          closes: record.closes,
+          duration_mins: record.duration_mins,
+          course_code: record.course_code,
+          section: record.section,
+          rules: record.rules,
+          max_enrollments: record.max_enrollments,
+          current_enrollments: record.current_enrollments,
+        }));
+
+        setTests(formattedTests);
       } catch (error) {
         console.error("Error fetching tests:", error);
       }
     }
+
     fetchTests();
   }, []);
 
@@ -154,7 +286,7 @@ export function TestsPage() {
   }
 
   async function editTest(updatedTest: Test) {
-    setTests(tests.map(t => (t.id === updatedTest.id ? updatedTest : t)));
+    setTests(tests.map((t) => (t.id === updatedTest.id ? updatedTest : t)));
   }
 
   return (

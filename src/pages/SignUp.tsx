@@ -58,65 +58,44 @@ export function SignUpPage() {
   const auth = useContext(AuthContext);
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
-  const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>([]);
-  const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(new Set());
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [filteredEnrollments, setFilteredEnrollments] = useState<Enrollment[]>(
+    []
+  );
+  const [selectedEnrollments, setSelectedEnrollments] = useState<Set<number>>(
+    new Set()
+  );
+  const [, setEnrollments] = useState<Enrollment[]>([]);
   const [page, setPage] = useState(0);
   const [studentName, setStudentName] = useState("");
-  
+  const perPage = 100;
+
   useEffect(() => {
     if (!date) return;
   
     const selectedDateStr = format(date, "yyyy-MM-dd");
-    let filterQuery = `start_test_at >= "${selectedDateStr} 00:00:00" && start_test_at <= "${selectedDateStr} 23:59:59"`;
+    let filterQuery = `start_test_at >= \"${selectedDateStr} 00:00:00\" && start_test_at <= \"${selectedDateStr} 23:59:59\"`;
   
     if (studentName.trim() !== "") {
-      filterQuery += ` && canvas_student_name ~ "${studentName.trim()}"`;
+      filterQuery += ` && canvas_student_name ~ \"${studentName.trim()}\"`;
     }
   
     enrollmentsCollection
-      .getFullList({
+      .getList<Enrollment>(page + 1, perPage, {
         expand: "test",
         sort: "-start_test_at",
         filter: filterQuery,
       })
       .then((data) => {
-        const enrollments: Enrollment[] = data.map((item) => ({
-          canvas_student_id: item.canvas_student_id,
-          canvas_student_name: item.canvas_student_name,
-          duration_mins: item.duration_mins,
-          link_sent: item.link_sent,
-          start_test_at: item.start_test_at,
-          unlock_after: item.unlock_after,
-          expand: {
-            test: {
-              name: item.expand?.test?.name || "",
-              course_code: item.expand?.test?.course_code || "",
-              section: item.expand?.test?.section || "",
-              rules: item.expand?.test?.rules || "No rules provided",
-            },
-          },
-        }));
-  
-        setEnrollments(enrollments);
-        setFilteredEnrollments(enrollments);
+        setEnrollments(data.items);
+        setFilteredEnrollments(data.items);
       })
       .catch((error) => console.error("Error fetching enrollments:", error));
-  }, [date, studentName]);
-  
+  }, [date, studentName, page]);  
 
-  useEffect(() => {
-    if (date && enrollments.length > 0) {
-      const selectedDateStr = format(date, "yyyy-MM-dd");
-      const filtered = enrollments.filter((e) => {
-        const enrollmentDateStr = format(parsePocketbaseDate(e.start_test_at), "yyyy-MM-dd");
-        return enrollmentDateStr === selectedDateStr;
-      });
-
-      setFilteredEnrollments(filtered);
-    }
-  }, [date]);
-
+  const paginatedEnrollments = filteredEnrollments.slice(
+    page * perPage,
+    (page + 1) * perPage
+  );
 
   const handleCheckboxChange = (id: number) => {
     setSelectedEnrollments((prevSelected) => {
@@ -140,8 +119,8 @@ export function SignUpPage() {
 
   return (
     <>
+      <PageNavigation page={page} setPage={setPage} />
       <div className="flex gap-4 mt-6">
-        {/* Search Field */}
         <input
           type="text"
           placeholder="Search by student name..."
@@ -150,7 +129,6 @@ export function SignUpPage() {
           className="border rounded p-2"
         />
 
-        {/* Date Picker (unchanged) */}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button variant={"outline"} className="w-[240px] text-left">
@@ -179,7 +157,9 @@ export function SignUpPage() {
         <TableHeader>
           <TableRow>
             <TableHead>
-              {selectedEnrollments.size > 0 ? `${selectedEnrollments.size} / 100` : " "}
+              {selectedEnrollments.size > 0
+                ? ` ${selectedEnrollments.size} / ${perPage}`
+                : " "}
             </TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Time</TableHead>
@@ -189,7 +169,7 @@ export function SignUpPage() {
             <TableHead>Rules</TableHead>
           </TableRow>
         </TableHeader>
-        {filteredEnrollments.map((e, i) => (
+        {paginatedEnrollments.map((e, i) => (
           <TableRow key={i}>
             <TableCell>
               <input
@@ -199,19 +179,18 @@ export function SignUpPage() {
               />
             </TableCell>
             <TableCell>{e.canvas_student_name}</TableCell>
-            <TableCell>{parsePocketbaseDate(e.start_test_at).toLocaleString()}</TableCell>
+            <TableCell>
+              {parsePocketbaseDate(e.start_test_at).toLocaleString()}
+            </TableCell>
             <TableCell>{e.duration_mins + " minutes"}</TableCell>
             <TableCell>
               {e.expand.test.course_code + " " + e.expand.test.section}
             </TableCell>
-            <TableCell>
-              {e.expand.test.name}
-            </TableCell>
-            <TableCell>{e.expand.test.rules}</TableCell>
+            <TableCell>{e.expand.test.name}</TableCell>
+            <TableCell>{e.expand.test.rules || "No Rules Provided"}</TableCell>
           </TableRow>
         ))}
       </Table>
-
       <PageNavigation page={page} setPage={setPage} />
     </>
   );
