@@ -225,8 +225,8 @@ function TestCard({
   }, [currentTest.id]);
 
   return (
-    <Card>
-      <CardHeader className="flex justify-between items-center">
+    <Card className="w-1/5">
+      <CardHeader className="flex justify-between">
         <div>
           <CardTitle>{test.name}</CardTitle>
           <CardDescription>
@@ -239,10 +239,10 @@ function TestCard({
         <p>Opens: {new Date(test.opens).toLocaleDateString()}</p>
         <p>Closes: {new Date(test.closes).toLocaleDateString()}</p>
         <p>Duration: {test.duration_mins} mins</p>
-        <p>Rules: {test.rules}</p>
         <p>
           {enrollmentCount} / {test.max_enrollments} students signed up
         </p>
+        <p>Rules: {test.rules}</p>
       </CardContent>
     </Card>
   );
@@ -256,7 +256,7 @@ export function TestsPage() {
       try {
         const records = await pocketBase
           .collection("tests")
-          .getFullList({ requestKey: null });
+          .getFullList({ requestKey: null, sort: "-opens" });
 
         // Map the records into Test objects
         const formattedTests: Test[] = records.map((record) => ({
@@ -292,7 +292,7 @@ export function TestsPage() {
   return (
     <div className="m-5">
       <TestDialog onSave={addTest} />
-      <div className="flex flex-wrap gap-4">
+      <div className="flex flex-wrap gap-4 justify-center">
         {tests.map((test) => (
           <TestCard key={test.id} test={test} onEdit={editTest} />
         ))}
