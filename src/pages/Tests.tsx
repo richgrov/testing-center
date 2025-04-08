@@ -16,6 +16,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { pocketBase } from "@/pocketbase";
 
 interface Test {
@@ -30,15 +39,20 @@ interface Test {
   max_enrollments: number;
 }
 
-function ensureDateAtTime(dateStr: string, hour: number, minute: number) {
-  const date = new Date(dateStr);
-  date.setUTCHours(hour, minute, 0, 0);
-  return date.toISOString();
+function localToUTC(date: Date, hour: number, minute: number): string {
+  const localDate = new Date(date);
+  localDate.setHours(hour, minute, 0, 0);
+  return localDate.toISOString();
 }
 
-function formatDateForInput(dateStr: string) {
-  if (!dateStr) return "";
-  return new Date(dateStr).toISOString().slice(0, 10);
+function utcToLocal(utcDateStr: string): Date {
+  if (!utcDateStr) return new Date();
+  return new Date(utcDateStr);
+}
+
+function formatDate(date: Date | undefined): string {
+  if (!date) return "";
+  return format(date, "PPP"); // Long date format
 }
 
 function TestDialog({
@@ -61,17 +75,36 @@ function TestDialog({
       max_enrollments: 0,
     }
   );
+  const [openDate, setOpenDate] = useState<Date | undefined>(
+    test?.opens ? utcToLocal(test.opens) : undefined
+  );
+  const [closeDate, setCloseDate] = useState<Date | undefined>(
+    test?.closes ? utcToLocal(test.closes) : undefined
+  );
   const [open, setOpen] = useState(false);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  }
 
-    if (name === "opens") {
-      setFormData({ ...formData, opens: ensureDateAtTime(value, 0, 0) }); // Set opening time to 00:00 UTC
-    } else if (name === "closes") {
-      setFormData({ ...formData, closes: ensureDateAtTime(value, 23, 59) }); // Set closing time to 23:59 UTC
-    } else {
-      setFormData({ ...formData, [name]: value });
+  function handleOpenDateChange(date: Date | undefined) {
+    setOpenDate(date);
+    if (date) {
+      setFormData({
+        ...formData,
+        opens: localToUTC(date, 0, 0),
+      });
+    }
+  }
+
+  function handleCloseDateChange(date: Date | undefined) {
+    setCloseDate(date);
+    if (date) {
+      setFormData({
+        ...formData,
+        closes: localToUTC(date, 23, 59),
+      });
     }
   }
 
@@ -79,8 +112,8 @@ function TestDialog({
     try {
       const testData = {
         ...formData,
-        opens: ensureDateAtTime(formData.opens, 0, 0),
-        closes: ensureDateAtTime(formData.closes, 23, 59),
+        opens: openDate ? localToUTC(openDate, 0, 0) : "",
+        closes: closeDate ? localToUTC(closeDate, 23, 59) : "",
       } as Test;
 
       let savedRecord;
@@ -143,23 +176,63 @@ function TestDialog({
 
         <div className="flex justify-center gap-8">
           <div>
-            <label>Test's opening date</label>
-            <Input
-              name="opens"
-              type="date"
-              value={formatDateForInput(formData.opens)}
-              onChange={handleChange}
-            />
+            <label className="block mb-2">Test's opening date</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !openDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {openDate ? (
+                    format(openDate, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={openDate}
+                  onSelect={handleOpenDateChange}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>
-            <label>Test's closing date</label>
-            <Input
-              name="closes"
-              type="date"
-              value={formatDateForInput(formData.closes)}
-              onChange={handleChange}
-            />
+            <label className="block mb-2">Test's closing date</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !closeDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {closeDate ? (
+                    format(closeDate, "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={closeDate}
+                  onSelect={handleCloseDateChange}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -236,8 +309,8 @@ function TestCard({
         <TestDialog test={test} onSave={onEdit} />
       </CardHeader>
       <CardContent>
-        <p>Opens: {new Date(test.opens).toLocaleDateString()}</p>
-        <p>Closes: {new Date(test.closes).toLocaleDateString()}</p>
+        <p>Opens: {formatDate(utcToLocal(test.opens))}</p>
+        <p>Closes: {formatDate(utcToLocal(test.closes))}</p>
         <p>Duration: {test.duration_mins} mins</p>
         <p>
           {enrollmentCount} / {test.max_enrollments} students signed up
