@@ -1,5 +1,7 @@
 import { pocketBase } from "@/pocketbase";
 
+const API_BASE = "https://lms.neumont.edu/api/v1/";
+
 export interface FetchForwardRequest {
   url: URL | string;
   method: string;
@@ -68,15 +70,16 @@ export interface CanvasStudent {
 }
 
 export async function retrieveCanvasStudents(
-  apiBase: string,
   authHeader: string,
   courseId: string
 ): Promise<CanvasStudent[]> {
   const request = paginatedCanvasRequest(
     {
       method: "GET",
-      url: new URL(`courses/${courseId}/users?enrollment_type=student`, apiBase)
-        .href,
+      url: new URL(
+        `courses/${courseId}/users?enrollment_type=student`,
+        API_BASE
+      ).href,
       headers: { Authorization: authHeader },
       body: "",
     },
@@ -151,7 +154,6 @@ export async function createEnrollmentsForStudents(
 }
 
 export async function sendLinksToStudents(
-  apiBase: string,
   authHeader: string,
   testId: string,
   linkBase: string,
@@ -177,7 +179,7 @@ export async function sendLinksToStudents(
     try {
       const conversation = await fetchForward({
         method: "POST",
-        url: new URL("conversations", apiBase).href,
+        url: new URL("conversations", API_BASE).href,
         headers: {
           Authorization: authHeader,
           "Content-Type": "application/json",

@@ -336,7 +336,6 @@ function TestCard({
 }
 
 interface GenerateAndSendLinksFormData {
-  apiBase: string;
   authHeader: string;
   courseId: string;
   testId: string;
@@ -355,7 +354,6 @@ function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
   const [statusMessage, setStatusMessage] = useState("");
 
   const [formData, setFormData] = useState<GenerateAndSendLinksFormData>({
-    apiBase: "https://lms.neumont.edu/api/v1/",
     authHeader: "",
     courseId: "",
     testId: "",
@@ -386,7 +384,6 @@ function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
 
       // Step 1: Retrieve students from Canvas
       const students = await retrieveCanvasStudents(
-        formData.apiBase,
         formData.authHeader,
         formData.courseId
       );
@@ -412,7 +409,6 @@ function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
 
       // Step 3: Send links to the students
       const { sent, total } = await sendLinksToStudents(
-        formData.apiBase,
         formData.authHeader,
         formData.testId,
         formData.linkBase,
@@ -465,18 +461,6 @@ function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
           </div>
         ) : (
           <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="apiBase" className="text-sm font-medium">
-                Canvas API Base URL
-              </label>
-              <Input
-                id="apiBase"
-                name="apiBase"
-                value={formData.apiBase}
-                onChange={handleChange}
-              />
-            </div>
-
             <div className="grid gap-2">
               <label htmlFor="authHeader" className="text-sm font-medium">
                 Canvas Auth Token
