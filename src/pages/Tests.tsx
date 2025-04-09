@@ -25,7 +25,21 @@ import {
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { pocketBase } from "@/pocketbase";
+import {
+  retrieveCanvasStudents,
+  createEnrollmentsForStudents,
+  sendLinksToStudents,
+} from "@/lib/canvas-utils";
 
 interface Test {
   id: string;
@@ -321,6 +335,279 @@ function TestCard({
   );
 }
 
+interface GenerateAndSendLinksFormData {
+  apiBase: string;
+  authHeader: string;
+  courseId: string;
+  testId: string;
+  linkBase: string;
+  subject: string;
+  body: string;
+  unlocksAfter: string;
+}
+
+function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
+  const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  const [formData, setFormData] = useState<GenerateAndSendLinksFormData>({
+    apiBase: "https://lms.neumont.edu/api/v1/",
+    authHeader: "",
+    courseId: "",
+    testId: "",
+    linkBase: "https://testing-center.grover.sh/test_slot/",
+    subject: "Test Link",
+    body: "Here is your link to take the test:",
+    unlocksAfter: new Date().toISOString(),
+  });
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  }
+
+  function handleSelectChange(name: string, value: string) {
+    setFormData({ ...formData, [name]: value });
+  }
+
+  async function handleGenerateAndSend() {
+    try {
+      setIsLoading(true);
+      setProgress(0);
+      setCurrentStep(0);
+      setTotalSteps(2);
+      setStatusMessage("Fetching students from Canvas...");
+
+      // Step 1: Retrieve students from Canvas
+      const students = await retrieveCanvasStudents(
+        formData.apiBase,
+        formData.authHeader,
+        formData.courseId
+      );
+
+      if (students.length === 0) {
+        throw new Error("No students found for this course");
+      }
+
+      setCurrentStep(1);
+      setStatusMessage(
+        `Signing ${students.length} students up for the test...`
+      );
+
+      // Step 2: Create enrollments for the students
+      await createEnrollmentsForStudents(
+        formData.testId,
+        students,
+        formData.unlocksAfter
+      );
+
+      setCurrentStep(2);
+      setStatusMessage("Sending links to students...");
+
+      // Step 3: Send links to the students
+      const { sent, total } = await sendLinksToStudents(
+        formData.apiBase,
+        formData.authHeader,
+        formData.testId,
+        formData.linkBase,
+        formData.subject,
+        formData.body,
+        (current, total) => {
+          setProgress(Math.floor((current / total) * 100));
+        }
+      );
+
+      setStatusMessage(
+        `Successfully sent ${sent} links out of ${total} students`
+      );
+      setTimeout(() => {
+        setOpen(false);
+        setIsLoading(false);
+        setStatusMessage("");
+      }, 3000);
+    } catch (error) {
+      console.error("Error:", error);
+      setStatusMessage(
+        `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">Send Test Links</Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>Generate Enrollments & Send Links</DialogTitle>
+          <DialogDescription>
+            Generate test enrollments and send links to students in one step
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="flex flex-col items-center space-y-4 py-4">
+            <div className="w-full">
+              <p className="text-sm font-medium mb-2">{statusMessage}</p>
+              <Progress value={progress} className="h-2 w-full" />
+              <p className="text-xs text-gray-500 mt-1">
+                Step {currentStep} of {totalSteps}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="apiBase" className="text-sm font-medium">
+                Canvas API Base URL
+              </label>
+              <Input
+                id="apiBase"
+                name="apiBase"
+                value={formData.apiBase}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="authHeader" className="text-sm font-medium">
+                Canvas Auth Token
+              </label>
+              <Input
+                id="authHeader"
+                name="authHeader"
+                value={formData.authHeader}
+                onChange={handleChange}
+                placeholder="Bearer token..."
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="courseId" className="text-sm font-medium">
+                Canvas Course ID
+              </label>
+              <Input
+                id="courseId"
+                name="courseId"
+                value={formData.courseId}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="testId" className="text-sm font-medium">
+                Test
+              </label>
+              <Select
+                value={formData.testId}
+                onValueChange={(value) => handleSelectChange("testId", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a test" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tests.map((test) => (
+                    <SelectItem key={test.id} value={test.id}>
+                      {test.name} ({test.course_code} {test.section})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="unlocksAfter" className="text-sm font-medium">
+                Unlocks After
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.unlocksAfter && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.unlocksAfter ? (
+                      format(new Date(formData.unlocksAfter), "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={
+                      formData.unlocksAfter
+                        ? new Date(formData.unlocksAfter)
+                        : undefined
+                    }
+                    onSelect={(date) => {
+                      if (date) {
+                        const dateWithTime = new Date(date);
+                        dateWithTime.setHours(0, 0, 0, 0);
+                        setFormData({
+                          ...formData,
+                          unlocksAfter: dateWithTime.toISOString(),
+                        });
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="subject" className="text-sm font-medium">
+                Email Subject
+              </label>
+              <Input
+                id="subject"
+                name="subject"
+                value={formData.subject}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <label htmlFor="body" className="text-sm font-medium">
+                Email Body
+              </label>
+              <Textarea
+                id="body"
+                name="body"
+                value={formData.body}
+                onChange={handleChange}
+                rows={4}
+              />
+            </div>
+
+            <Button
+              onClick={handleGenerateAndSend}
+              disabled={
+                !formData.testId || !formData.authHeader || !formData.courseId
+              }
+            >
+              Generate & Send
+            </Button>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TestsPage() {
   const [tests, setTests] = useState<Test[]>([]);
 
@@ -364,7 +651,10 @@ export function TestsPage() {
 
   return (
     <div className="m-5">
-      <TestDialog onSave={addTest} />
+      <div className="flex justify-center gap-4 mb-4">
+        <TestDialog onSave={addTest} />
+        <GenerateAndSendLinksDialog tests={tests} />
+      </div>
       <div className="flex flex-wrap gap-4 justify-center">
         {tests.map((test) => (
           <TestCard key={test.id} test={test} onEdit={editTest} />
