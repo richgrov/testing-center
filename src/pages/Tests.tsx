@@ -443,10 +443,7 @@ function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Generate Enrollments & Send Links</DialogTitle>
-          <DialogDescription>
-            Generate test enrollments and send links to students in one step
-          </DialogDescription>
+          <DialogTitle>Send Test Links</DialogTitle>
         </DialogHeader>
 
         {isLoading ? (
