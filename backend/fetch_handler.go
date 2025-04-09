@@ -12,8 +12,8 @@ import (
 // FetchHandler handles custom fetch-like HTTP requests using core.RequestEvent.
 func FetchHandler(e *core.RequestEvent) error {
 	// Ensure the user is authenticated and is a superuser
-	if !e.HasSuperuserAuth() {
-		return e.UnauthorizedError("admin privelages required", nil)
+	if e.Auth == nil {
+		return e.UnauthorizedError("must be signed in", nil)
 	}
 
 	var payload struct {
@@ -84,4 +84,3 @@ func FetchHandler(e *core.RequestEvent) error {
 	// No error, so we return nil
 	return nil
 }
-
