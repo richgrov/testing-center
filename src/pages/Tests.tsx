@@ -384,7 +384,7 @@ function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
 
       // Step 1: Retrieve students from Canvas
       const students = await retrieveCanvasStudents(
-        formData.authHeader,
+        "Beaerer " + formData.authHeader,
         formData.courseId
       );
 
@@ -409,7 +409,7 @@ function GenerateAndSendLinksDialog({ tests }: { tests: Test[] }) {
 
       // Step 3: Send links to the students
       const { sent, total } = await sendLinksToStudents(
-        formData.authHeader,
+        "Bearer " + formData.authHeader,
         formData.testId,
         formData.linkBase,
         formData.subject,
