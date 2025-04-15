@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { dateToPocketbase } from "@/lib/utils";
 
 const enrollmentsCollection = pocketBase.collection("test_enrollments");
 
@@ -71,14 +72,15 @@ export function SignUpPage() {
 
   useEffect(() => {
     if (!date) return;
-  
-    const selectedDateStr = format(date, "yyyy-MM-dd");
-    let filterQuery = `start_test_at >= \"${selectedDateStr} 00:00:00\" && start_test_at <= \"${selectedDateStr} 23:59:59\"`;
-  
+
+    const start = dateToPocketbase(new Date(date).setHours(0, 0, 0, 0));
+    const end = dateToPocketbase(new Date(date).setHours(23, 59, 59, 999));
+    let filterQuery = `start_test_at >= \"${start}\" && start_test_at <= \"${end}\"`;
+
     if (studentName.trim() !== "") {
       filterQuery += ` && canvas_student_name ~ \"${studentName.trim()}\"`;
     }
-  
+
     enrollmentsCollection
       .getList<Enrollment>(page + 1, perPage, {
         expand: "test",
@@ -90,7 +92,7 @@ export function SignUpPage() {
         setFilteredEnrollments(data.items);
       })
       .catch((error) => console.error("Error fetching enrollments:", error));
-  }, [date, studentName, page]);  
+  }, [date, studentName, page]);
 
   const paginatedEnrollments = filteredEnrollments.slice(
     page * perPage,
