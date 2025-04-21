@@ -103,6 +103,7 @@ export default function EditTestSlotPage() {
         "(opens <= {:myOpenValue} && closes >= {:myOpenValue}) || (opens <= {:myCloseValue} && closes >= {:myCloseValue}) || ({:myOpenValue} <= opens && {:myCloseValue} >= opens) || ({:myOpenValue} <= closes && {:myCloseValue} >= closes)",
         { myOpenValue, myCloseValue }
       ),
+      sort: "opens",
     }).then((result) => {
       for (const item of result.items) {
         selectedHours.set(item.id, item as TestingCenterHours);
