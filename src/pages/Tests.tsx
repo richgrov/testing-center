@@ -250,7 +250,7 @@ function TestDialog({
           </div>
         </div>
 
-        <label>Test Duration</label>
+        <label>Test Duration (minutes)</label>
         <Input
           name="duration_mins"
           type="number"
